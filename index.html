@@ -136,6 +136,413 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-sql执行过程mysql-tidb" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/">sql执行过程mysql-tidb</a>
+    </h1>
+  
+
+        
+        <a href="/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/" class="archive-article-date">
+  	<time datetime="2020-12-08T13:10:22.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>答好一道题 比泛泛而谈一百道题更重要。而且这一过程的收益也更高。</p>
+</blockquote>
+<p>SQL执行过程</p>
+<p>1.mysql</p>
+<p>我们几乎每天都在写SQL语句，当我们写了一条查询语句，会得到一个查询结果，但是它在MySQL内部是怎样的一个执行过程呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from T where Id = <span class="number">10</span>;</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>如图，我们先了解一下MySQL的基本架构示意图。<br><img src="https://img-blog.csdnimg.cn/20200708162607673.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1h1bXV5YW5nXw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>整体来看，MySQL分为<code>Server层</code>和<code>存储引擎层</code>两部分。</p>
+<p>Server层包括连接器、查询缓存、分析器、优化器、执行器等，包含了大多数核心功能，以及所有内置函数（如日期、时间、数学和加密函数等），所有涉及到跨存储引擎的功能都在这一层实现，如存储过程、触发器、视图等</p>
+<p>存储引擎层负责数据的存储和提取。它的架构模式是插件式的，支持InnoDB、MyISAM、Memory等。我们最多使用的是InnoDB，因为它是MySQL 5.5.5版本后的默认存储引擎。</p>
+<p>从图中可以看出，多种存储引擎公用一个Server层，也就是从连接器到执行器的部分。</p>
+<h3 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h3><p>首先，会连接到数据库上，这时候就是连接器起的作用。连接器负责跟客户端建立连接、获取权限、维持和管理连接。连接命令：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql -h$ip -P$port -u$user -p</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>输完命令之后，需要输入密码。</p>
+<p>连接命令中的mysql是客户端的工具，用来跟服务端建立连接。在完成经典的TCP握手之后，连接器就开始认证身份，也就是我们输入用户名和密码后。如果用户名或密码不对，就会报错<code>“Access denied for user”</code>的错误，这将结束客户端的执行；如果用户名和密码认证通过，连接器会到权限表里面查出你拥有的权限，然后这个链接里面的权限判断逻辑，都将依赖于此时读到的权限。</p>
+<p>这意味着，当一个用户成功建立连接后，及时对这个用户的权限做了修改，也不影响当前连接着的权限，只有再次新建连接时才会使用新的权限设置。</p>
+<p>连接完成后，如果没有其他操作，该连接处于空闲状态，如图：<br><img src="https://img-blog.csdnimg.cn/20200708160936701.png" alt="在这里插入图片描述"><br>如果客户端很长时间没有操作，连接器会自动断开。这个时间可由参数<code>wait_timeout</code>控制，默认是8小时。</p>
+<p>数据库里的 <strong>长连接</strong> 是指连接成功后，如果客户端持续有请求，则一直使用同一个连接。<strong>短连接</strong> 则指的是每次执行完很少的几次查询就断开连接，下次查询再重新建立一个。因为建立连接的过程比较复杂，所以建议尽量使用长连接。</p>
+<h3 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h3><p>连接建立完成后，就可以执行select语句了。也就是：查询缓存。</p>
+<p>MySQL拿到一个查询请求后，会先去查询缓存看看之前是不是执行过这个语句。如果执行过，其结果会以key-value对的形式被直接缓存在内存中。如果能够找到缓存中的key，那么这个对应的value就会被直接返回给客户端。</p>
+<p>如果不在查询缓存中，就会继续后面的执行阶段。执行完成后，执行结果会被存入查询缓存中。</p>
+<p>虽然使用查询缓存的效率很高，但实质上使用这种方式不太好。因为查询缓存的失效非常频繁，只要有对一个表的更新，这个表上所有的查询缓存都会被清空。因此很可能存了很多结果，还没使用，就被一个更新清空了…</p>
+<h3 id="分析器"><a href="#分析器" class="headerlink" title="分析器"></a>分析器</h3><p>如果没有命中查询缓存，就该真正执行这个语句去查询了。</p>
+<p>首先，mysql需要知道这条语句是要做什么，因此需要对SQL语句进行解析。首先分析器会做“词法分析”。MySQL需要识别我们输入的多个字符串和空格分别代表什么。MySQL从输入的“select”关键字识别出这是一个查询语句，“T”识别成表名“T”，“ID”识别成“列ID”。然后进行“语法分析”。语法分析器会根据语法规则，判断输入的这个SQL是否满足MySQL语法。<br>如果语句不对，会看到报错<code>You have an error in your SQL syntax</code>提示。</p>
+<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>经过分析器的分析后，MySQL知道要做什么了。开始执行前，还要进行优化器的处理。</p>
+<p>优化器是在表里面有多个索引时，决定使用哪个索引；或者在一个语句有多表关联时，决定各个表的连接顺序。比如有一个两表关联的join：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * <span class="function">from t1 join t2 <span class="title">using</span><span class="params">(ID)</span> where t1.c</span>=<span class="number">10</span> and t2.d=<span class="number">20</span>;</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>既可以先从表t1里取出c=10的记录的ID值，再根据ID值关联到表t2，再判断t2里面的d的值是否等于20</li>
+<li>也可以先从表t2里取出d=20的记录的ID值，再根据ID值关联到表t1，再判断t1里面的c的值是否等于10</li>
+</ul>
+<p>这两种执行方法的结果一样，但是执行效率可能不同。优化器的作用就是选择一种效率更高的方式执行。</p>
+<p>优化器阶段完成后，这个语句的执行方案就确定了，然后开始进入执行阶段。</p>
+<h3 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h3><p>开始执行的时候，要先判断一下当前用户有没有查询表T的权限。如果没有，就会返回没有权限的错误：<br><img src="https://img-blog.csdnimg.cn/2020070816172877.png" alt="在这里插入图片描述"><br>如果有权限，就会打开表继续执行。打开表时，执行器会根据表的引擎定义去使用这个引擎提供的接口。</p>
+<p>比如在表T中，ID字段没有索引，那么执行器的执行流程是这样的：</p>
+<ol>
+<li>调用InnoDB引擎接口取该表第一行，判断ID值是不是10，如果不是则跳过，如果是则将这行存在结果集中；</li>
+<li>调用引擎接口取“下一行”，重复相同的判断逻辑，直到取到这个表的最后一行。</li>
+<li>执行器将上面遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。</li>
+</ol>
+<p>这条语句到这就执行完成了。</p>
+<p>对于有索引的表，执行逻辑差不多。第一次调用的是“<strong>取满足条件的第一行</strong>”这个接口，之后循环取“<strong>满足条件的下一行</strong>”这个接口，这些接口在引擎中已经定义好了。</p>
+<p>在数据库的慢查询日志中看到的<code>rows_examined</code>字段表示这个语句执行过程中扫描了多少航。这个值就是执行器每次调用执行引擎获取数据行的时候累加的。</p>
+<hr>
+<p>稍微总结一下:</p>
+<p>1.先建立连接2.查询缓存3.分析器 进行语法分析 词法分析，生成抽象语法树 4.优化器 比如走索引5.执行器，权限检验，调用存储引擎，给客户端返回数据</p>
+<hr>
+<p>2.tidb</p>
+<p><img src="https://download.pingcap.com/images/blog-cn/tidb-source-code-reading-3/2.png" alt="SQL 层执行过程"></p>
+<h4 id="引用"><a href="#引用" class="headerlink" title="引用:"></a>引用:</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/Xumuyang_/article/details/107207370">https://blog.csdn.net/Xumuyang_/article/details/107207370</a></li>
+<li><a target="_blank" rel="noopener" href="https://pingcap.com/blog-cn/tidb-source-code-reading-3/">https://pingcap.com/blog-cn/tidb-source-code-reading-3/</a></li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="sql执行过程-mysql-tidb" class="article article-type-sql执行过程  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/12/08/mysql-tidb/">mysql/tidb</a>
+    </h1>
+  
+
+        
+        <a href="/2020/12/08/mysql-tidb/" class="archive-article-date">
+  	<time datetime="2020-12-08T13:06:37.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/12/08/mysql-tidb/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-mysql如何实现事务" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">mysql如何实现事务</a>
+    </h1>
+  
+
+        
+        <a href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/" class="archive-article-date">
+  	<time datetime="2020-12-08T13:03:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h4 id="原子性"><a href="#原子性" class="headerlink" title="原子性:"></a>原子性:</h4><p>想要保证事务的原子性，就需要在异常发生时，对已经执行的操作进行<strong>回滚</strong>而在 MySQL 中，恢复机制是通过<em>回滚日志</em>（undo log）实现的，所有事务进行的修改都会先记录到这个回滚日志中，然后在对数据库中的对应行进行写入。</p>
+<p>这个过程其实非常好理解，为了能够在发生错误时撤销之前的全部操作，肯定是需要将之前的操作都记录下来的，这样在发生错误时才可以回滚。</p>
+<p>回滚日志除了能够在发生错误或者用户执行 <code>ROLLBACK</code> 时提供回滚相关的信息，它还能够在整个系统发生崩溃、数据库进程直接被杀死后，当用户再次启动数据库进程时，<strong>还能够立刻通过查询回滚日志将之前未完成的事务进行回滚</strong>，这也就需要回滚日志必须先于数据持久化到磁盘上，是我们需要先写日志后写数据库的主要原因。</p>
+<p>回滚日志并不能将数据库物理地恢复到执行语句或者事务之前的样子；它是逻辑日志</p>
+<hr>
+<h4 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h4><p>既然是数据库，那么一定对数据的持久存储有着非常强烈的需求，如果数据被写入到数据库中，那么数据一定能够被安全存储在磁盘上；<strong>而事务的持久性就体现在，一旦事务被提交，那么数据一定会被写入到数据库中并持久存储起来。</strong></p>
+<p>当事务已经被提交之后，就无法再次回滚了，唯一能够撤回已经提交的事务的方式就是创建一个相反的事务对原操作进行『补偿』，这也是事务持久性的体现之一。</p>
+<p>与原子性一样，事务的持久性也是通过日志来实现的，MySQL 使用重做日志（redo log）实现事务的持久性，<strong>重做日志由两部分组成，一是内存中的重做日志缓冲区，因为重做日志缓冲区在内存中，所以它是易失的，另一个就是在磁盘上的重做日志文件，它是持久的。</strong></p>
+<p>当我们在一个事务中尝试对数据进行修改时，<strong>它会先将数据从磁盘读入内存，并更新内存中缓存的数据，然后生成一条重做日志并写入重做日志缓存，当事务真正提交时，MySQL 会将重做日志缓存中的内容刷新到重做日志文件，再将内存中的数据更新到磁盘上</strong>，图中的第 4、5 步就是在事务提交时执行的。</p>
+<hr>
+<h3 id="回滚日志和重做日志"><a href="#回滚日志和重做日志" class="headerlink" title="回滚日志和重做日志"></a>回滚日志和重做日志</h3><p>到现在为止我们了解了 MySQL 中的两种日志，回滚日志（undo log）和重做日志（redo log）；在数据库系统中，事务的原子性和持久性是由事务日志（transaction log）保证的，在实现时也就是上面提到的两种日志，前者用于对事务的影响进行撤销，后者在错误处理时对已经提交的事务进行重做，它们能保证两点：</p>
+<ol>
+<li>发生错误或者需要回滚的事务能够成功回滚（原子性）；</li>
+<li>在事务提交后，数据没来得及写会磁盘就宕机时，在下次重新启动后能够成功恢复数据（持久性）；</li>
+</ol>
+<hr>
+<p>在数据库中，这两种日志经常都是一起工作的，我们<strong>可以</strong>将它们整体看做一条事务日志，其中包含了事务的 ID、修改的行元素以及修改前后的值。</p>
+<hr>
+<h2 id="隔离性"><a href="#隔离性" class="headerlink" title="隔离性"></a>隔离性</h2><ul>
+<li><code>RAED UNCOMMITED</code>：使用查询语句不会加锁，可能会读到未提交的行（Dirty Read）；</li>
+<li><code>READ COMMITED</code>：只对记录加记录锁，而不会在记录之间加间隙锁，所以允许新的记录插入到被锁定记录的附近，所以再多次使用查询语句时，可能得到不同的结果（Non-Repeatable Read）；<ul>
+<li><code>REPEATABLE READ</code>：多次读取同一范围的数据会返回第一次查询的快照，不会返回不同的数据行，但是可能发生幻读（Phantom Read）；    </li>
+</ul>
+</li>
+<li><code>SERIALIZABLE</code>：InnoDB 隐式地将全部的查询语句加上共享锁，解决了幻读的问题；</li>
+</ul>
+<hr>
+<p>1.使用查询语句不会加锁，读到未提交的数据。</p>
+<p>2.只对<strong>记录加记录锁</strong>，而不会在记录之间间隙锁。所以允许新的记录插入到被锁定记录的附近，所以再多次使用查询语句时，可能得到不同的结果。</p>
+<p>3.多次查询同一范围的数据会返回第一次查询的快照，不会返回不同的数据行，但是可能发生幻读。</p>
+<p>4.Innodb隐式地将全部的查询语句加上共享锁，解决了幻读的问题。</p>
+<p>以上的所有的事务隔离级别都不允许脏写入（Dirty Write），也就是当前事务更新了另一个事务已经更新但是还未提交的数据，大部分的数据库中都使用了 READ COMMITED 作为默认的事务隔离级别，但是 MySQL 使用了 REPEATABLE READ 作为默认配置；从 RAED UNCOMMITED 到 SERIALIZABLE，随着事务隔离级别变得越来越严格，数据库对于并发执行事务的性能也逐渐下降。</p>
+<hr>
+<h3 id="隔离级别的实现"><a href="#隔离级别的实现" class="headerlink" title="隔离级别的实现"></a>隔离级别的实现</h3><p>数据库对于隔离级别的实现就是使用<strong>并发控制机制</strong>对在同一时间执行的事务进行控制，限制不同的事务对于同一资源的访问和更新，而最重要也最常见的并发控制机制，在这里我们将简单介绍三种最重要的并发控制器机制的工作原理。</p>
+<hr>
+<h4 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h4><p>锁是一种最为常见的并发控制机制，在一个事务中，我们并不会将整个数据库都加锁，而是只会锁住那些需要访问的数据项， MySQL 和常见数据库中的锁都分为两种，共享锁（Shared）和互斥锁（Exclusive），前者也叫读锁，后者叫写锁。</p>
+<h4 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h4><p>除了锁，另一种实现事务的隔离性的方式就是通过时间戳，使用这种方式实现事务的数据库，例如 PostgreSQL 会为每一条记录保留两个字段；<em>读时间戳</em>中包括了所有访问该记录的事务中的最大时间戳，而记录行的<em>写时间戳</em>中保存了将记录改到当前值的事务的时间戳。</p>
+<p>使用时间戳实现事务的隔离性时，往往都会使用乐观锁，先对数据进行修改，在写回时再去判断当前值，也就是时间戳是否改变过，如果没有改变过，就写入，否则，生成一个新的时间戳并再次更新数据，乐观锁其实并不是真正的锁机制，它只是一种思想，在这里并不会对它进行展开介绍。</p>
+<h4 id="多版本和快照隔离"><a href="#多版本和快照隔离" class="headerlink" title="多版本和快照隔离"></a>多版本和快照隔离</h4><p>通过维护多个版本的数据，<strong>数据库可以允许事务在数据被其他事务更新时对旧版本的数据进行读取</strong>，很多数据库都对这一机制进行了实现；因为所有的读操作不再需要等待写锁的释放，所以能够显著地提升读的性能，MySQL 和 PostgreSQL 都对这一机制进行自己的实现，也就是 MVCC，虽然各自实现的方式有所不同，MySQL 就通过文章中提到的回滚日志实现了 MVCC，<strong>保证事务并行执行时能够不等待互斥锁的释放直接获取数据</strong>。</p>
+<hr>
+<p>如果一个事务原子地在一个一致地数据库中独立运行，那么在它执行之后，数据库的状态一定是一致的。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-如何实现zset" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/">如何实现zset</a>
+    </h1>
+  
+
+        
+        <a href="/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/" class="archive-article-date">
+  	<time datetime="2020-12-08T13:01:51.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="redis有序集合zset的底层实现——跳跃表skiplist"><a href="#redis有序集合zset的底层实现——跳跃表skiplist" class="headerlink" title="redis有序集合zset的底层实现——跳跃表skiplist"></a>redis有序集合zset的底层实现——跳跃表skiplist</h1><p>skiplist</p>
+<p>搞懂skiplist 再搞一搞ziplist</p>
+<hr>
+<p>跳跃表是有序单链表的一种改进，其查询、插入、删除也是O(logN)的时间复杂度。</p>
+<p><img src="https://img-blog.csdnimg.cn/20190705174140317.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2RhX2thb19sYQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<hr>
+<p>问题就在于是如何实现有序的？</p>
+<hr>
+<h2 id="skiplist原理"><a href="#skiplist原理" class="headerlink" title="skiplist原理"></a>skiplist原理</h2><p>普通有序链表的插入需要一个一个向前查找是否可以插入，所以时间复杂度为O(N)，比如下面这个链表插入23，就需要一直查找到22和26之间。</p>
+<p><img src="https://user-gold-cdn.xitu.io/2019/12/28/16f4cdf8de59fcc7?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img"></p>
+<p>如果节点能够跳过一些节点，连接到更靠后的节点就可以优化插入速度：</p>
+<p><img src="https://user-gold-cdn.xitu.io/2019/12/28/16f4ce042d683d4e?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img"></p>
+<p>在上面这个结构中，插入23的过程是</p>
+<ul>
+<li>先使用第2层链接head-&gt;7-&gt;19-&gt;26，发现26比23大，就回到19</li>
+<li>再用第1层连接19-&gt;22-&gt;26，发现比23大，那么就插入到26之前，22之后</li>
+</ul>
+<p>上面这张图就是跳表的初步原理，但一个元素插入链表后，应该拥有几层连接呢？跳表在这块的实现方式是随机的，也就是23这个元素插入后，随机出一个数，比如这个数是3，那么23就会有如下连接：</p>
+<ul>
+<li>第3层head-&gt;23-&gt;end</li>
+<li>第2层19-&gt;23-&gt;26</li>
+<li>第1层22-&gt;23-&gt;26</li>
+</ul>
+<p>所以通过有序和和多指针来提高速度。有点那种二分的意思。</p>
+<hr>
+<p>结一下跳表原理：</p>
+<ul>
+<li>每个跳表都必须设定一个最大的连接层数MaxLevel</li>
+<li>第一层连接会连接到表中的每个元素</li>
+<li>插入一个元素会随机生成一个<strong>连接层数值[1, MaxLevel]之间，根据这个值跳表会给这元素建立N个连接</strong></li>
+<li><strong>插入某个元素的时候先从最高层开始，当跳到比目标值大的元素后，回退到上一个元素，用该元素的下一层连接进行遍历，周而复始直到第一层连接，最终在第一层连接中找到合适的位置</strong></li>
+</ul>
+<p>这太骚了</p>
+<hr>
+<p>redis中skiplist的MaxLevel设定为32层</p>
+<p>skiplist原理中提到skiplist一个元素插入后，会随机分配一个层数，而redis的实现，这个随机的规则是：</p>
+<ul>
+<li>一个元素拥有第1层连接的概率为100%</li>
+<li>一个元素拥有第2层连接的概率为50%</li>
+<li>一个元素拥有第3层连接的概率为25%</li>
+<li>以此类推…</li>
+</ul>
+<p>为了提高搜索效率，redis会缓存MaxLevel的值，在每次插入/删除节点后都会去更新这个值，这样每次搜索的时候不需要从32层开始搜索，而是从MaxLevel指定的层数开始搜索</p>
+<hr>
+<h3 id="查找过程"><a href="#查找过程" class="headerlink" title="查找过程"></a>查找过程</h3><p>对于zrangebyscore命令：score作为查找的对象，在跳表中跳跃查询，就和上面skiplist的查询一样</p>
+<hr>
+<h3 id="插入过程"><a href="#插入过程" class="headerlink" title="插入过程"></a>插入过程</h3><p>zadd [zset name] [score] [value]：</p>
+<ul>
+<li>在map中查找value是否已存在，如果存在现需要在skiplist中找到对应的元素删除，再在skiplist做插入</li>
+<li>插入过程也是用score来作为查询位置的依据，和skiplist插入元素方法一样。并需要更新value-&gt;score的map</li>
+</ul>
+<p>如果score一样怎么办？根据value再排序，按照顺序插入</p>
+<hr>
+<h3 id="删除过程"><a href="#删除过程" class="headerlink" title="删除过程"></a>删除过程</h3><p>zrem [zset name] [value]：从<strong>map</strong>中找到value所对应的score，然后再在跳表中搜索这个score,value对应的节点，并删除</p>
+<hr>
+<h3 id="排名是怎么算出来的"><a href="#排名是怎么算出来的" class="headerlink" title="排名是怎么算出来的"></a>排名是怎么算出来的</h3><p>zrank [zset name] [value]的实现依赖与一些附加在跳表上的属性：</p>
+<ul>
+<li>跳表的每个元素的Next指针都记录了这个指针能够跨越多少元素，redis在插入和删除元素的时候，都会更新这个值</li>
+<li>然后在搜索的过程中按经过的路径将路径中的span值相加得到rank</li>
+</ul>
+<hr>
+<p>太骚了 redis</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-about" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -688,188 +1095,10 @@
 
 
   
-    <article id="post-个人博客To-do" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/10/03/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2To-do/">个人博客To-do</a>
-    </h1>
-  
-
-        
-        <a href="/2020/10/03/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2To-do/" class="archive-article-date">
-  	<time datetime="2020-10-03T12:05:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-10-03</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <ul>
-<li>About me 单独出一个页面,目前主题的about me 感觉没意思.(看一看hexo new page)</li>
-<li>接入评论系统Valine(想要省事用主题自带的评论..但是要考虑换主题的因素)</li>
-<li>博客中如何插入图片(貌似是官方文档中提到的资源文件夹)</li>
-</ul>
-<hr>
-<p>2020.10.03 </p>
-<p>bug记录:</p>
-<h5 id="背景"><a href="#背景" class="headerlink" title="背景:"></a>背景:</h5><p>​    本来想切换一下主题，无法使用于是切换回去。</p>
-<h5 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案:"></a>解决方案:</h5><p>​    由于看页面效果报错和切换主题导致的问题一致，而且本地<code>hexo s</code>没有问题。<br>但是线上有问题，于是怀疑代码没同步，但实际上代码已同步。然后怀疑是浏览器缓存问题，切换浏览器，一样的结果。(这边存在一个疑点就是为啥切换浏览器是一个结果）然后清除浏览器缓存解决问题。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">to-do</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/10/03/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2To-do/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-随想" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/10/03/%E9%9A%8F%E6%83%B3/">随想</a>
-    </h1>
-  
-
-        
-        <a href="/2020/10/03/%E9%9A%8F%E6%83%B3/" class="archive-article-date">
-  	<time datetime="2020-10-03T11:14:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-10-03</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>第n次重新搭建我的个人博客~</p>
-<hr>
-<p>本次博客是在ariel cafe 搭的,终于找到一个适合写代码的地方~</p>
-<p>hexo 十分方便,只花了大概一晚上的时间…</p>
-<p>而且很多时间是花在调节样式上面…</p>
-<hr>
-<p>今天给自己立下了个flag:</p>
-<p>这三个月交把时间还给自己写代码,做出点能挂在github上面不羞愧的东西。</p>
-<p>很是羞愧，今年大四了，接触编程三年了，没有一个拿的出手的东西。</p>
-<p>3个目标:</p>
-<ul>
-<li>学一学Rust </li>
-<li>目前的项目目标是static server这个项目</li>
-<li>搭建好自己的博客</li>
-</ul>
-<p>希望对得起自己的2021年吧。我希望static server是我对2021年的完美答复。</p>
-<hr>
-<p>还是很开心的，能够找回自己在深圳的状态。因为开学这一个月来，特别是这段时间处于一个极度空虚的状态。在宿舍没有办法写代码，非常浮躁，无聊。是我非常讨厌的废物的状态。也是我在大学里的一个常态，很羞愧，荒废了时间，荒废了生命。从今天开始，希望能对得起自己，对得起自己的时间。这段时间最大的收获还是看了《人生的智慧》这本书吧。破解空虚和无聊的唯一办法是精神世界，创造即是破解的办法。一直读书也是很无聊的，读书只是接受别人的思想。再回到这本书上，个人认为真的很值得再读几遍。感觉每一章节都有其价值。</p>
-<hr>
-<p>环境对人是很重要的，在宿舍真的没有办法写代码。真的没有办法专心干任何事。</p>
-<p>但是还好命运对我不错。还是让我找到一个去处。</p>
-<hr>
-<p>10-05 </p>
-<p>在咖啡厅就能找回自信，走出那种堕落的感觉。还是，就算欠花呗也要一直来咖啡馆吧。</p>
-<p>要成为一个很厉害很厉害的开发者。现在立下这个目标嘿嘿。</p>
-<p>要成为一个很厉害很厉害的开发者。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">随笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/10/03/%E9%9A%8F%E6%83%B3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
+    <nav id="page-nav">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
+    </nav>
   
 
 
