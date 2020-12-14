@@ -365,7 +365,7 @@ th {
   padding: 0; }
 
 html {
-  font-size: 16px;
+  font-size: 18px;
   box-sizing: border-box; }
 
 body {
@@ -410,11 +410,11 @@ h2 {
   font-family: Athelas, STHeiti, Microsoft Yahei, serif; }
 
 h3 {
-  font-size: 20px;
+  font-size: 22px;
   font-family: Athelas, STHeiti, Microsoft Yahei, serif; }
 
 h4 {
-  font-size: 16px;
+  font-size: 20px;
   font-family: Athelas, STHeiti, Microsoft Yahei, serif; }
 
 h5 {
@@ -1149,7 +1149,7 @@ h6 {
         top: -8px;
         right: -2px;
         color: #c05b4d;
-        font-size: 12px; }
+        font-size: 18px; }
       .categories .categories-tags .category-link:active, .categories .categories-tags .category-link:focus, .categories .categories-tags .category-link:hover {
         color: #c05b4d;
         transform: scale(1.1); }
