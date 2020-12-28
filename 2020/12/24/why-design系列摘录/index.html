@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="why-design系列摘录"/><meta name="keywords" content="转载, Stone's Blog" /><link rel="alternate" href="/default" title="Stone's Blog" ><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0" />
+<link rel="canonical" href="http://example.com/2020/12/24/why-design系列摘录/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0" />
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>why-design系列摘录 - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/archives/">
+        <li class="mobile-menu-item">Archives
+          </li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags
+          </li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/archives/">
+            Archives
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/tags/">
+            Tags
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about/">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">why-design系列摘录
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-24
+        </span></div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-Redis-%E9%80%89%E6%8B%A9%E5%8D%95%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="toc-text">为什么 Redis 选择单线程模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1"><span class="toc-text">设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="toc-text">单线程模型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AF%E7%BB%B4%E6%8A%A4%E6%80%A7"><span class="toc-text">可维护性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91%E5%A4%84%E7%90%86"><span class="toc-text">并发处理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E7%93%B6%E9%A2%88"><span class="toc-text">性能瓶颈</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%95%E5%85%A5%E5%A4%9A%E7%BA%BF%E7%A8%8B"><span class="toc-text">引入多线程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%93%8D%E4%BD%9C"><span class="toc-text">删除操作</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-DNS-%E4%BD%BF%E7%94%A8-UDP-%E5%8D%8F%E8%AE%AE"><span class="toc-text">为什么 DNS 使用 UDP 协议</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E4%BC%9A%E6%B6%88%E8%80%97%E8%BE%83%E5%A4%9A%E8%B5%84%E6%BA%90"><span class="toc-text">为什么系统调用会消耗较多资源</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AF%E4%BB%B6%E4%B8%AD%E6%96%AD"><span class="toc-text">软件中断</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B1%87%E7%BC%96%E6%8C%87%E4%BB%A4"><span class="toc-text">汇编指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vDSO"><span class="toc-text">vDSO</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-Linux-%E9%BB%98%E8%AE%A4%E9%A1%B5%E5%A4%A7%E5%B0%8F%E6%98%AF-4KB"><span class="toc-text">为什么 Linux 默认页大小是 4KB</span></a></li></ol>
+    </div>
+  </div><div class="post-content"><p>转载</p>
+<a id="more"></a> 
+
+<h1 id="为什么-Redis-选择单线程模型"><a href="#为什么-Redis-选择单线程模型" class="headerlink" title="为什么 Redis 选择单线程模型"></a>为什么 Redis 选择单线程模型</h1><p>就像在介绍中说的，这一篇文章想要讨论的两个与 Redis 有关的问题就是：</p>
+<ul>
+<li>为什么 Redis 在最初的版本中选择单线程模型？</li>
+<li>为什么 Redis 在 4.0 之后的版本中加入了多线程的支持？</li>
+</ul>
+<p>这两个看起来有些矛盾的问题实际上并不冲突，我们会分别阐述对这个看起来完全相反的设计决策作出分析和解释，不过在具体分析它们的设计之前，我们先来看一下不同版本 Redis 顶层的设计：</p>
+<hr>
+<p><img src="https://img.draveness.me/redis-io-multiplexing.png" alt="redis-io-multiplexing"></p>
+<p>Redis 作为一个内存服务器，它需要处理很多来自<strong>外部的网络请求</strong>，它使用 I/O 多路复用机制同时监听多个文件描述符的可读和可写状态，一旦收到网络请求就会在内存中快速处理，由于绝大多数的操作都是纯内存的，所以处理的速度会非常地快。</p>
+<hr>
+<p>​    在 <a target="_blank" rel="noopener" href="https://raw.githubusercontent.com/antirez/redis/4.0/00-RELEASENOTES">Redis 4.0</a> 之后的版本，情况就有了一些变动，新版的 Redis 服务在执行一些命令时就会使用『主处理线程』之外的其他线程，例如 <code>UNLINK</code>、<code>FLUSHALL ASYNC</code>、<code>FLUSHDB ASYNC</code> 等非阻塞的删除操作。</p>
+<hr>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>无论是使用单线程模型还是多线程模型，这两个设计上的决定都是为了更好地提升 Redis 的<strong>开发效率</strong>、<strong>运行性能</strong>，想要理解两个看起来矛盾的设计决策，<strong>我们首先需要重新梳理做出决定的上下文和大前提</strong>，从下面的角度来看，使用单线程模型和多线程模型其实也并不矛盾。</p>
+<p>虽然 Redis 在较新的版本中引入了多线程，不过是在<strong>部分命令</strong>上引入的，其中包括非阻塞的删除操作，在整体的架构设计上，主处理程序还是单线程模型的；由此看来，我们今天想要分析的两个问题可以简化成：</p>
+<ul>
+<li>为什么 Redis 服务使用单线程模型处理绝大多数的网络请求？</li>
+<li>为什么 Redis 服务增加了多个非阻塞的删除操作，例如：<code>UNLINK</code>、<code>FLUSHALL ASYNC</code> 和 <code>FLUSHDB ASYNC</code>？</li>
+</ul>
+<hr>
+<h3 id="单线程模型"><a href="#单线程模型" class="headerlink" title="单线程模型"></a>单线程模型</h3><ol>
+<li>使用单线程模型能带来更好的可维护性，方便开发和调试；</li>
+<li>使用单线程模型也能并发的处理客户端的请求；</li>
+<li>Redis 服务中运行的绝大多数操作的性能瓶颈都不是 CPU；</li>
+</ol>
+<blockquote>
+<p>可维护性 能并发处理客户端的请求 大多数操作的性能瓶颈都不是CPU</p>
+</blockquote>
+<p>上述三个原因中的最后一个是最终使用单线程模型的决定性因素，其他的两个原因都是使用单线程模型额外带来的好处</p>
+<h4 id="可维护性"><a href="#可维护性" class="headerlink" title="可维护性"></a>可维护性</h4><p>可维护性对于一个项目来说非常重要，如果代码难以调试和测试，问题也经常难以复现，这对于任何一个项目来说都会严重地影响项目的可维护性。多线程模型虽然在某些方面表现优异，但是它却引入了程序执行顺序的不确定性，代码的执行过程不再是串行的，多个线程同时访问的变量如果没有谨慎处理就会带来诡异的问题。</p>
+<p>引入了多线程，我们就必须要同时引入并发控制来保证在多个线程同时访问数据时程序行为的正确性，这就需要工程师额外维护并发控制的相关代码，例如，我们会需要在可能被并发读写的变量上增加互斥锁：    </p>
+<p>在访问这些变量或者内存之前也需要先对获取互斥锁，一旦忘记获取锁或者忘记释放锁就可能会导致各种诡异的问题，管理相关的并发控制机制也需要付出额外的研发成本和负担。</p>
+<h4 id="并发处理"><a href="#并发处理" class="headerlink" title="并发处理"></a>并发处理</h4><p>使用单线程模型也并不意味着程序不能并发的处理任务，Redis 虽然使用单线程模型处理用户的请求，但是它却使用 I/O 多路复用机制<strong>并发</strong>处理来自客户端的多个连接，同时等待多个连接发送的请求。</p>
+<p>在 I/O 多路复用模型中，最重要的函数调用就是 <code>select</code> 以及类似函数，该方法的能够同时监控多个文件描述符（也就是客户端的连接）的可读可写情况，当其中的某些文件描述符可读或者可写时，<code>select</code> 方法就会返回可读以及可写的文件描述符个数。</p>
+<p>使用 I/O 多路复用技术能够极大地减少系统的开销，系统不再需要额外创建和维护进程和线程来监听来自客户端的大量连接，减少了服务器的开发成本和维护成本。</p>
+<hr>
+<h4 id="性能瓶颈"><a href="#性能瓶颈" class="headerlink" title="性能瓶颈"></a>性能瓶颈</h4><p>最后要介绍的其实就是 Redis 选择单线程模型的决定性原因 —— <strong>多线程技术能够帮助我们充分利用 CPU 的计算资源来并发的执行不同的任务</strong>，但是 CPU 资源往往都不是 Redis 服务器的性能瓶颈。哪怕我们在一个普通的 Linux 服务器上启动 Redis 服务，它也能在 1s 的时间内处理 1,000,000 个用户请求。</p>
+<p>如果这种吞吐量不能满足我们的需求，更推荐的做法是使用分片的方式将不同的请求交给不同的 Redis 服务器来处理，而不是在同一个 Redis 服务中引入大量的多线程操作。</p>
+<p>简单总结一下，Redis 并不是 CPU 密集型的服务，如果不开启 AOF 备份，所有 Redis 的操作都会在内存中完成不会涉及任何的 I/O 操作，这些数据的读写由于只发生在内存中，所以处理速度是非常快的；<strong>整个服务的瓶颈在于网络传输带来的延迟和等待客户端的数据传输，也就是网络 I/O</strong>，所以使用多线程模型处理全部的外部请求可能不是一个好的方案。</p>
+<p>多线程虽然会帮助我们更充分地利用 CPU 资源，但是操作系统上线程的切换也不是免费的，线程切换其实会带来额外的开销，其中包括：</p>
+<ol>
+<li>保存线程 1 的执行上下文；</li>
+<li>加载线程 2 的执行上下文；</li>
+</ol>
+<p>频繁的对线程的上下文进行切换可能还会导致性能地急剧下降，这可能会导致我们不仅没有提升请求处理的平均速度，反而进行了负优化，所以这也是为什么 Redis 对于使用多线程技术非常谨慎。</p>
+<hr>
+<h3 id="引入多线程"><a href="#引入多线程" class="headerlink" title="引入多线程"></a>引入多线程</h3><p>Redis 在最新的几个版本中加入了一些可以被<strong>其他线程异步处理的删除操作</strong>，也就是我们在上面提到的 <code>UNLINK</code>、<code>FLUSHALL ASYNC</code> 和 <code>FLUSHDB ASYNC</code>，我们为什么会需要这些删除操作，而它们为什么需要通过多线程的方式异步处理？</p>
+<h4 id="删除操作"><a href="#删除操作" class="headerlink" title="删除操作"></a>删除操作</h4><p>我们可以在 Redis 在中使用 <code>DEL</code> 命令来删除一个键对应的值，如果待删除的键值对占用了较小的内存空间，那么哪怕是<strong>同步地</strong>删除这些键值对也不会消耗太多的时间。</p>
+<p>但是对于 Redis 中的一些超大键值对，几十 MB 或者几百 MB 的数据并不能在几毫秒的时间内处理完，Redis 可能会需要在释放内存空间上消耗较多的时间，这些操作就会阻塞待处理的任务，影响 Redis 服务处理请求的 PCT99 和可用性。</p>
+<p>然而释放内存空间的工作其实可以由后台线程异步进行处理，这也就是 <code>UNLINK</code> 命令的实现原理，<strong>它只会将键从元数据中删除，真正的删除操作会在后台异步执行。</strong></p>
+<p>Redis 选择使用单线程模型处理客户端的请求主要还是因为 CPU 不是 Redis 服务器的瓶颈，所以使用多线程模型带来的性能提升并不能抵消它带来的开发成本和维护成本，系统的性能瓶颈也主要在网络 I/O 操作上；而 Redis 引入多线程操作也是出于性能上的考虑，对于一些大键值对的删除操作，通过多线程非阻塞地释放内存空间也能减少对 Redis 主线程阻塞的时间，提高执行的效率。</p>
+<hr>
+<p>总结:</p>
+<p>1.Redis使用单线程模型 因为它的主要操作瓶颈不在CPU.多线程的好处充分利用CPU的计算资源来并发执行不同的任务。主要瓶颈在网络IO.而 Redis 引入多线程操作也是出于性能上的考虑，对于一些大键值对的删除操作，通过多线程非阻塞地释放内存空间也能减少对 Redis 主线程阻塞的时间，提高执行的效率。</p>
+<hr>
+<h1 id="为什么-DNS-使用-UDP-协议"><a href="#为什么-DNS-使用-UDP-协议" class="headerlink" title="为什么 DNS 使用 UDP 协议"></a>为什么 DNS 使用 UDP 协议</h1><p>DNS 查询的类型不止包含 A 记录、CNAME 记录等常见查询，还包含 AXFR 类型的特殊查询，这种特殊查询主要用于 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/DNS_zone_transfer">DNS 区域传输</a>，它的作用就是在多个命名服务器之间快速迁移记录，由于查询返回的响应比较大，所以会使用 TCP 协议来传输数据包。</p>
+<hr>
+<h1 id="为什么系统调用会消耗较多资源"><a href="#为什么系统调用会消耗较多资源" class="headerlink" title="为什么系统调用会消耗较多资源"></a>为什么系统调用会消耗较多资源</h1><p>系统调用是计算机程序在执行的过程中向操作系统内核申请服务的方法，这可能包含硬件相关的服务、新进程的创建和执行以及进程调度，对操作系统稍微有一些了解的人都知道 — 系统调用为用户程序提供了操作系统的接口<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:1">1</a>。</p>
+<p>多数编程语言的函数调用只需要<strong>分配新的栈空间、向寄存器写入参数并执行 <code>CALL</code> 汇编指令跳转到目标地址执行函数，在函数返回时通过栈或者寄存器返回参数<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:3">3</a>。</strong>与函数调用相比，系统调用会消耗更多的资源，如下图所示，使用 <code>SYSCALL</code> 指定执行系统调用消耗的时间是 C 函数调用的几十倍<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:4">4</a>：</p>
+<p>上图中的 vDSO 全称是虚拟动态链接对象（Virtual Dynamically Shared Object、vDSO），它可以减少系统调用的消耗的时间，我们会在后面详细分析它的实现原理。</p>
+<p><code>getpid(2)</code> 是一个相对比较快的系统调用，该系统调用不包含任何参数，只会切换到内核态、读取变量并返回 PID，我们可以将它的执行时间当做系统调用的基准测试；除了 <code>getpid(2)</code> 之外，使用 <code>close(999)</code> 系统调用关闭不存在的文件描述符会消耗更少的资源<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:5">5</a>，与 <code>getpid(2)</code> 相比大概会少 20 个 CPU 周期<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:6">6</a>，当然想要实现用于测试额外开销的系统调用，使用自定义的空函数应该是最完美的选择，感兴趣的读者可以自行尝试一下。</p>
+<p><img src="https://img.draveness.me/2020-05-21-15900666966824-syscall-approaches.png" alt="syscall-approaches"></p>
+<ul>
+<li>使用软件中断（Software interrupt）触发系统调用；</li>
+<li>使用 <code>SYSCALL</code> / <code>SYSENTER</code> 等<strong>汇编指令</strong>触发系统调用；</li>
+<li>使用虚拟动态共享对象（virtual dynamic shared object、vDSO）执行系统调用；</li>
+</ul>
+<h2 id="软件中断"><a href="#软件中断" class="headerlink" title="软件中断"></a>软件中断</h2><p>中断是向处理器发送的输入信号，它能够表示某个时间需要操作系统立刻处理，如果操作系统接收了中断，那么处理器会暂停当前的任务、存储上下文状态、并执行中断处理器处理发生的事件，在中断处理器结束后，当前处理器会恢复上下文继续完成之前的工作<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:7">7</a>。</p>
+<p>根据事件发出者的不同，我们可以将中断分成硬件和软件中断两种，硬件中断是由处理器外部的设备触发的电子信号；而软件中断是由处理器在执行特定指令时触发的，某些特殊的指令也可以故意触发软件中断<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:8">8</a>。</p>
+<p>在 32 位的 x86 的系统上，我们可以使用 <code>INT</code> 指令来触发软件中断，早期的 Linux 会使用 <code>INT 0x80</code> 触发软件中断、注册特定的中断处理器 <a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/458ef2a25e0cbdc216012aa2b9cf549d64133b08/arch/x86/entry/entry_32.S#L1072"><code>entry_INT80_32</code></a> 来处理系统调用，我们来了解一下使用<strong>软件中断执行系统调用的具体过程<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:9">9</a>：</strong></p>
+<blockquote>
+<p>挺复杂的 忽略之</p>
+</blockquote>
+<p>从上述系统调用的执行过程中，我们可以看到基于软件中断的系统调用是一个比较复杂的流程，应用程序通过软件中断陷入内核态并在内核态查询并执行系统调用表注册的函数，整个过程不仅需要<strong>存储寄存器中的数据</strong>、<strong>从用户态切换至内核态</strong>，<strong>还需要完成验证参数的合法性</strong>，与函数调用的过程相比确实会带来很多的额外开销<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:10">10</a>。</p>
+<p>实际上，使用 <code>INT 0x80</code> 来触发系统调用早就是过去时了，大多数的程序都会尽量避免这种触发方式。然而这一规则也不是通用的，因为 Go 语言团队在做基准测试时发现 <code>INT 0x80</code> 触发系统调用在部分操作系统上与其他方式有着几乎相同的性能<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:11">11</a>，所以在 Android/386 和 Linux/386 等架构上仍然会使用中断来执行系统调用<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:12">12</a></p>
+<h2 id="汇编指令"><a href="#汇编指令" class="headerlink" title="汇编指令"></a>汇编指令</h2><p>因为使用软件中断实现的系统调用在 Pentium 4 的处理器上表现非常差<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:13">13</a>。Linux 为了解决这个问题，在较新的版本使用了新的汇编指令 <code>SYSENTER</code> / <code>SYSCALL</code>，它们是 Intel 和 AMD 上用于实现快速系统调用的指令，我们会在 32 位的操作系统上使用 <code>SYSENTER</code> / <code>SYSEXIT</code>，在 64 位的操作系统上使用 <code>SYSCALL</code> / <code>SYSRET</code>：</p>
+<h2 id="vDSO"><a href="#vDSO" class="headerlink" title="vDSO"></a>vDSO</h2><p>虚拟动态共享对象（virtual dynamic shared object、vDSO）是 <strong>Linux 内核对用户空间暴露内核空间部分函数的一种机制</strong><a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:15">15</a>，简单来说，我们将 Linux 内核中不涉及安全的系统调用直接映射到用户空间，这样用户空间中的应用程序在调用这些函数时就不需要切换到内核态以减少性能上的损失。</p>
+<p>vDSO 使用了标准的链接和加载技术，作为一个动态链接库，它由 Linux 内核提供并映射到每一个正在执行的进程中，我们可以使用如下所示的命令查看该动态链接库在进程中的位置：</p>
+<hr>
+<p>整个过程不仅需要<strong>存储寄存器中的数据</strong>、<strong>从用户态切换至内核态</strong>，<strong>还需要完成验证参数的合法性</strong>，与函数调用的过程相比确实会带来很多的额外开销<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-syscall-overhead/#fn:10">10</a>。</p>
+<hr>
+<h1 id="为什么-Linux-默认页大小是-4KB"><a href="#为什么-Linux-默认页大小是-4KB" class="headerlink" title="为什么 Linux 默认页大小是 4KB"></a>为什么 Linux 默认页大小是 4KB</h1>
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/25/%E5%A6%82%E4%BD%95%E6%8F%90%E9%AB%98%E6%95%88%E7%8E%87/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">如何提高效率</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/24/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E8%AF%95%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98/">
+        <span class="next-text nav-default">操作系统面试相关问题</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zstone35@foxmail.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://twitter.com/zm_stoner" class="iconfont icon-twitter" title="twitter"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/zstone12" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2020<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+</body>
+</html>

@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
-<meta name="description" content="操作系统面试相关问题"/><link rel="alternate" href="/default" title="Stone's Home" ><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0" />
+<meta name="description" content="操作系统面试相关问题"/><meta name="keywords" content="转载, Stone's Blog" /><link rel="alternate" href="/default" title="Stone's Blog" ><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0" />
 <link rel="canonical" href="http://example.com/2020/12/24/操作系统面试相关问题/"/>
 
 <link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
@@ -37,12 +37,12 @@
   window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
 </script>
 
-    <title>操作系统面试相关问题 - Stone's Home</title>
+    <title>操作系统面试相关问题 - Stone's Blog</title>
   <meta name="generator" content="Hexo 5.2.0"></head>
 
   <body><div id="mobile-navbar" class="mobile-navbar">
   <div class="mobile-header-logo">
-    <a href="/." class="logo">Stone's Home</a>
+    <a href="/." class="logo">Stone's Blog</a>
   </div>
   <div class="mobile-navbar-icon">
     <span></span>
@@ -58,6 +58,9 @@
       </a><a href="/archives/">
         <li class="mobile-menu-item">Archives
           </li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags
+          </li>
       </a><a href="/about/">
         <li class="mobile-menu-item">About
           </li>
@@ -65,7 +68,7 @@
 </nav>
 <div class="container" id="mobile-panel">
       <header id="header" class="header"><div class="logo-wrapper">
-  <a href="/." class="logo">Stone's Home</a>
+  <a href="/." class="logo">Stone's Blog</a>
 </div>
 
 <nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
@@ -76,6 +79,11 @@
       <li class="menu-item">
           <a class="menu-item-link" href="/archives/">
             Archives
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/tags/">
+            Tags
             </a>
         </li>
       <li class="menu-item">
@@ -102,27 +110,76 @@
     <div class="post-toc" id="post-toc">
     <h2 class="post-toc-title">Contents</h2>
     <div class="post-toc-content">
-      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98"><span class="toc-text">虚拟内存</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98"><span class="toc-text">虚拟内存</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">是什么</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B5%B7%E5%88%B0%E4%BB%80%E4%B9%88%E4%BD%9C%E7%94%A8"><span class="toc-text">起到什么作用</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%93%E5%AD%98"><span class="toc-text">缓存</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-text">内存管理</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E4%BF%9D%E6%8A%A4"><span class="toc-text">内存保护</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </div><div class="post-content"><p>迫于面试 所以整理一下常见问题 。导致现在的博客质量很低，也没有用心写。过后一定改正。</p>
 <a id="more"></a> 
 
-<h4 id="虚拟内存"><a href="#虚拟内存" class="headerlink" title="虚拟内存"></a>虚拟内存</h4><p>1.产生原因</p>
-<p>2.起到作用</p>
-<p>3.具体实现？</p>
-<p>参考:</p>
+<p>在回答虚拟内存存在的<strong>必要性</strong>之前，我们需要理解操作系统中的虚拟内存<strong>是什么</strong>，它在操作系统中<strong>起到什么样的作用。</strong></p>
+<h2 id="虚拟内存"><a href="#虚拟内存" class="headerlink" title="虚拟内存"></a>虚拟内存</h2><p>来源:<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/">https://draveness.me/whys-the-design-os-virtual-memory/</a></p>
+<h5 id="是什么"><a href="#是什么" class="headerlink" title="是什么"></a>是什么</h5><p><strong>虚拟内存是操作系统物理内存和进程之间的中间层</strong>，它为进程隐藏了<strong>物理内存</strong>这一概念，为进程提供了更加简洁和易用的接口以及更加复杂的功能。</p>
+<h5 id="起到什么作用"><a href="#起到什么作用" class="headerlink" title="起到什么作用"></a>起到什么作用</h5><p>如果需要我们从头设计一个操作系统，让系统中的进程直接访问主内存中的物理地址应该是非常自然的决定，早期的操作系统确实也都是这么实现的，进程会使用目标内存的<strong>物理地址</strong>（Physical Address）直接访问内存中的内容，然而现代的操作系统都引入了虚拟内存，进程持有的<strong>虚拟地址</strong>（Virtual Address）会经过<strong>内存管理单元</strong>（Memory Mangament Unit）的转换变成物理地址<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:2">2</a>，然后再通过物理地址访问内存：</p>
 <ul>
-<li><p><a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/">https://draveness.me/whys-the-design-os-virtual-memory/</a></p>
-</li>
-<li><p><a target="_blank" rel="noopener" href="https://github.com/Snailclimb/JavaGuide">https://github.com/Snailclimb/JavaGuide</a></p>
-</li>
+<li>虚拟内存可以利用内存起到缓存的作用，提高进程访问<strong>磁盘</strong>的<strong>速度</strong>；</li>
+<li>虚拟内存可以为进程提供<strong>独立的内存空间</strong>，简化程序的链接、加载过程并通过动态库共享内存；</li>
+<li>虚拟内存可以控制进程对物理内存的访问，隔离不同进程的访问权限，提高系统的<strong>安全性</strong>；</li>
 </ul>
+<blockquote>
+<p> 缓存 提高-&gt;访问速度 </p>
+<p>为进程提高独立的内存空间 -&gt;简化程序的链接、加载过程</p>
+<p>控制进程对物理内存的访问 、隔离 -&gt;安全性</p>
+</blockquote>
+<hr>
+<h4 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h4><p>可以将虚拟内存看作在磁盘上一片空间。</p>
+<p>当这片空间中的一部分访问比较频繁时，<strong>该部分数据会以页为单位被缓存到主存中</strong>以加速 CPU 访问数据的性能，虚拟内存利用空间较大的磁盘存储作为『内存』并使用主存储缓存进行加速，<strong>让上层认为操作系统的内存很大而且很快，然而区域很大的磁盘并不快，而很快的内存也并不大</strong>。</p>
+<hr>
+<p>虚拟内存中的虚拟页（Virtual Page，PP）可能处于以下的三种状态 — 未分配（Unallocated）、未缓存（Uncached）和已缓存（Cached），其中未分配的内存页是没有被进程申请使用的，也就是空闲的虚拟内存，不占用虚拟内存磁盘的任何空间，未缓存和已缓存的内存页分别表示仅加载到磁盘中的内存页和已经加载到主存中的内存页。如上图所示，图中绿色的虚拟内存页由主存中的物理内存页（Physical Page，PP）支撑，所以它是已经缓存过的，而黄色的虚拟内存页仅在磁盘中，所以没有被物理内存缓存。</p>
+<p>当用户程序访问未被缓存的虚拟页时，硬件就会触发<strong>缺页中断</strong>（Page Fault，PF）<strong>，在部分情况下</strong>，被访问的页面已经加载到了物理内存中，但是用户程序的页表（Page Table）并不存在该对应关系，这时我们只需要在页表中建立虚拟内存到物理内存的关系；<strong>在其他情况下</strong>，操作系统需要将磁盘上未被缓存的虚拟页加载到物理内存中<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:4">4</a>。</p>
+<blockquote>
+<p> case 1: 未被缓存 也有可能是页表不存在对应关系。虚拟内存到物理内存的关系.</p>
+</blockquote>
+<blockquote>
+<p> case 2: 操作系统需要将磁盘上未被缓存的虚拟页加载到物理内存中.</p>
+</blockquote>
+<p>因为主内存的空间是有限的，当主内存中不包含可以使用的空间时，操作系统会从选择合适的物理内存页驱逐回磁盘，为新的内存页让出位置，选择待驱逐页的过程在操作系统中叫做页面替换（Page Replacement）。缺页中断和页面替换技术都是操作系统调页算法（Paging）的一部分，该算法的目的就是充分利用内存资源作为磁盘的缓存以提高程序的运行效率。</p>
+<h4 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h4><p>虚拟内存可以为<strong>正在运行的进程提供独立的内存空间，制造一种每个进程的内存都是独立的假象</strong>，在 64 位的操作系统上，<strong>每个进程都会拥有 256 TiB 的内存空间</strong>，<strong>内核空间和用户空间分别占 128 TiB</strong><a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:5">5</a>，部分操作系统使用 57 位虚拟地址以提供 128 PiB 的寻址空间<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:6">6</a>。因为每个进程的虚拟内存空间是完全独立的，所以它们都可以完整的使用 0x0000000000000000 到 0x00007FFFFFFFFFFF 的全部内存。</p>
+<p>虚拟内存空间只是操作系统中的逻辑结构，就像我们上面说的，应用程序最终还是需要访问物理内存或者磁盘上的内容。因为操作系统加了一个虚拟内存的中间层，所以我们也需要为进程实现地址翻译器，实现从虚拟地址到物理地址的转换，<strong>页表是虚拟内存系统中的重要数据结构，每一个进程的页表中都存储了从虚拟内存到物理内存页的映射关系，</strong>为了存储 64 位操作系统中 128 TiB 虚拟内存的映射数据，Linux 在 2.6.10 中引入了四层的页表辅助虚拟地址的转换<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:7">7</a>，在 4.11 中引入了五层的页表结构<a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-os-virtual-memory/#fn:8">8</a>，在未来还可能会引入更多层的页表结构以支持 64 位的虚拟地址。</p>
+<p>在如上图所示的四层页表结构中，操作系统会使用最低的 12 位作为页面的偏移量，剩下的 36 位会分四组分别表示当前层级在上一层中的索引，所有的虚拟地址都可以用上述的多层页表查找到对应的物理地址。</p>
+<p>因为有多层的页表结构可以用来转换虚拟地址，所以多个进程可以通过虚拟内存共享物理内存。我们在 <a target="_blank" rel="noopener" href="https://draveness.me/whys-the-design-redis-bgsave-fork/">为什么 Redis 快照使用子进程</a> 一文中介绍的写时复制就利用了虚拟内存的这个特性，当我们在 Linux 中调用 <code>fork</code> 创建子进程时，实际上<strong>只复制了父进程的页表</strong>。如下图所示，父子进程会通过不同的页表指向相同的物理内存：</p>
+<p><img src="https://img.draveness.me/2020-04-09-15863627859738-process-shared-memory.png" alt="process-shared-memory"></p>
+<p>虚拟内存不仅可以在 <code>fork</code> 时用于共享进程的物理内存，提供写时复制的机制，还能共享一些常见的动态库减少物理内存的占用，所有的进程都可能调用相同的操作系统内核代码，而 C 语言程序也会调用相同的标准库。</p>
+<p>除了能够共享内存之外，独立的虚拟内存空间也会简化内存的分配过程，当用户程序向操作系统申请堆内存时，操作系统可以分配几个连续的虚拟页，但是这些虚拟页可以对应到物理内存中不连续的页中。</p>
+<hr>
+<h5 id="内存保护"><a href="#内存保护" class="headerlink" title="内存保护"></a>内存保护</h5><p>操作系统中的用户程序不应该<strong>修改只读的代码段</strong>，也不应该读取或者修改内核中的代码和数据结构或者访问私有的以及其他的进程的内存，如果无法对用户进程的内存访问进行限制，攻击者就可以访问和修改其他进程的内存影响系统的安全。</p>
+<p>如果每一个进程都持有独立的虚拟内存空间，那么虚拟内存中页表可以理解成进程和物理页的『连接表』，其中可以存储进程和物理页之间的访问关系，包括读权限、写权限和执行权限：</p>
+<p>内存管理单元可以决定当前进程是否有权限访问目标的物理内存，这样我们就最终将权限管理的功能全部收敛到虚拟内存系统中，减少了可能出现风险的代码路径。</p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>虚拟内存的设计方法可以说是软件工程中的常见手段，通过结合磁盘和内存各自的优势，<strong>利用中间层对资源进行更合理地调度充分提高资源的利用率并提供和谐以及统一的抽象</strong>，而在实际的业务场景中，类似的缓存逻辑也比较常见。</p>
+<p>操作系统的虚拟内存是非常复杂的组件，没有工程师能够了解其中的全部细节，不过了解虚拟内存的整体设计也很有价值，我们能够从中找到很多软件设计的方法。我们重新回到今天的问题 — Linux 操作系统中为什么需要虚拟内存：</p>
+<ul>
+<li>虚拟内存可以结合磁盘和物理内存的优势为进程提供看起来速度足够快并且容量足够大的存储；</li>
+<li>虚拟内存可以为进程提供独立的内存空间并引入多层的页表结构将虚拟内存翻译成物理内存，进程之间可以共享物理内存减少开销，也能简化程序的链接、装载以及内存分配过程；</li>
+<li>虚拟内存可以控制进程对物理内存的访问，隔离不同进程的访问权限，提高系统的安全性。</li>
+</ul>
+<hr>
+<blockquote>
+<p>写得当真是太好了。</p>
+</blockquote>
+<hr>
 
       </div>
       
       <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+            </div>
         
-        <nav class="post-nav"><a class="next" href="/2020/12/23/12%E6%9C%88%E7%8A%B6%E6%80%81%E9%9A%8F%E6%83%B3/">
+        <nav class="post-nav"><a class="prev" href="/2020/12/24/why-design%E7%B3%BB%E5%88%97%E6%91%98%E5%BD%95/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">why-design系列摘录</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/23/12%E6%9C%88%E7%8A%B6%E6%80%81%E9%9A%8F%E6%83%B3/">
         <span class="next-text nav-default">12月状态随想</span>
         <span class="prev-text nav-mobile">Next</span>
         <i class="iconfont icon-right"></i>
