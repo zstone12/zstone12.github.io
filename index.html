@@ -98,167 +98,174 @@
         <div class="content-wrapper">
           <div id="content" class="content"><section id="posts" class="posts"><article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/28/%E8%82%A1%E7%A5%A8%E9%97%AE%E9%A2%98/">股票问题</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/31/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-28
+          2020-12-31
         </span></div>
     </header>
 
-    <div class="post-content"><p>股票问题还挺有意思的</p>
+    <div class="post-content"><p>In short.</p>
           <div class="read-more">
-            <a href="/2020/12/28/%E8%82%A1%E7%A5%A8%E9%97%AE%E9%A2%98/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/31/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/26/Innodb%E4%B8%AD%E7%9A%84%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E5%92%8C%E9%94%81%E7%9A%84%E5%85%B3%E7%B3%BB-%E6%91%98%E5%BD%95/">Innodb中的事务隔离级别和锁的关系(摘录)</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/LeetCode-DP%E9%97%AE%E9%A2%98/">LeetCode-DP问题</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-26
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>来源</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://tech.meituan.com/2014/08/20/innodb-lock.html">https://tech.meituan.com/2014/08/20/innodb-lock.html</a></li>
-</ul>
+    <div class="post-content"><p>1.编辑距离问题</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">minDistance</span>(<span class="params">self, word1, word2</span>):</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        :type word1: str</span></span><br><span class="line"><span class="string">        :type word2: str</span></span><br><span class="line"><span class="string">        :rtype: int</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        n = len(word1)</span><br><span class="line">        m = len(word2)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 有一个字符串为空串</span></span><br><span class="line">        <span class="keyword">if</span> n * m == <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">return</span> n + m</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># DP 数组</span></span><br><span class="line">        D = [ [<span class="number">0</span>] * (m + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> range(n + <span class="number">1</span>)]</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 边界状态初始化</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(n + <span class="number">1</span>):</span><br><span class="line">            D[i][<span class="number">0</span>] = i</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> range(m + <span class="number">1</span>):</span><br><span class="line">            D[<span class="number">0</span>][j] = j</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 计算所有 DP 值</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>, n + <span class="number">1</span>):</span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> range(<span class="number">1</span>, m + <span class="number">1</span>):</span><br><span class="line">                left = D[i - <span class="number">1</span>][j] + <span class="number">1</span></span><br><span class="line">                down = D[i][j - <span class="number">1</span>] + <span class="number">1</span></span><br><span class="line">                left_down = D[i - <span class="number">1</span>][j - <span class="number">1</span>] </span><br><span class="line">                <span class="keyword">if</span> word1[i - <span class="number">1</span>] != word2[j - <span class="number">1</span>]:</span><br><span class="line">                    left_down += <span class="number">1</span></span><br><span class="line">                D[i][j] = min(left, down, left_down)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> D[n][m]</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>2.最长公共子序列</p>
+<p>这是两个序列 (反而跟编辑距离类似)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">longestCommonSubsequence</span>(<span class="params">self,str1, str2</span>) -&gt; int:</span></span><br><span class="line">        m, n = len(str1), len(str2)</span><br><span class="line">        <span class="comment"># 构建 DP table 和 base case</span></span><br><span class="line">        dp = [[<span class="number">0</span>] * (n + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> range(m + <span class="number">1</span>)]</span><br><span class="line">        <span class="comment"># 进行状态转移</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>, m + <span class="number">1</span>):</span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> range(<span class="number">1</span>, n + <span class="number">1</span>):</span><br><span class="line">                <span class="keyword">if</span> str1[i - <span class="number">1</span>] == str2[j - <span class="number">1</span>]:</span><br><span class="line">                    <span class="comment"># 找到一个 lcs 中的字符</span></span><br><span class="line">                    dp[i][j] = <span class="number">1</span> + dp[i<span class="number">-1</span>][j<span class="number">-1</span>]</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                  	<span class="comment"># 最大的</span></span><br><span class="line">                    dp[i][j] = max(dp[i<span class="number">-1</span>][j], dp[i][j<span class="number">-1</span>])</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">return</span> dp[<span class="number">-1</span>][<span class="number">-1</span>]</span><br></pre></td></tr></table></figure>
+
+<p>3.最长上升子序列</p>
+<p>名字听着差不多 其实差好多。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">lengthOfLIS</span>(<span class="params">self, nums: List[int]</span>) -&gt; int:</span></span><br><span class="line">        n = len(nums)</span><br><span class="line">        dp = [<span class="number">1</span> <span class="keyword">for</span> i <span class="keyword">in</span> range(n)]</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(n):</span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> range(i):</span><br><span class="line">                <span class="keyword">if</span> nums[j]&lt;nums[i]:</span><br><span class="line">                    dp[i]=max(dp[i],dp[j]+<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> max(dp)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>4.零钱兑换一</p>
+
+        </div></article>
+      <article class="post">
+    <header class="post-header">
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/CAP/">CAP</a>
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-30
+        </span></div>
+    </header>
+
+    <div class="post-content"><p>来源:<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2018/07/cap.html">http://www.ruanyifeng.com/blog/2018/07/cap.html</a></p>
           <div class="read-more">
-            <a href="/2020/12/26/Innodb%E4%B8%AD%E7%9A%84%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E5%92%8C%E9%94%81%E7%9A%84%E5%85%B3%E7%B3%BB-%E6%91%98%E5%BD%95/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/CAP/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/25/%E5%88%B7%E9%A2%98/">刷题</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">操作系统面试常见问题总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-25
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>投机取巧…为了面试…我下贱…我馋offer的身子,..要恰饭的嘛…</p>
-<p>还挺有用的…目标 刷完&gt;=4</p>
+    <div class="post-content">加密的目的不是别的，就是因为这篇文章写得不好，没有看的意义，不浪费大家的宝贵时间。
           <div class="read-more">
-            <a href="/2020/12/25/%E5%88%B7%E9%A2%98/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/25/%E5%A6%82%E4%BD%95%E6%8F%90%E9%AB%98%E6%95%88%E7%8E%87/">如何提高效率</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/HTTP%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">HTTP面试常见问题总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-25
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>一点探索</p>
+    <div class="post-content">加密的目的不是别的，就是因为这篇文章写得不好，没有看的意义，不浪费大家的宝贵时间。
           <div class="read-more">
-            <a href="/2020/12/25/%E5%A6%82%E4%BD%95%E6%8F%90%E9%AB%98%E6%95%88%E7%8E%87/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/HTTP%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/24/why-design%E7%B3%BB%E5%88%97%E6%91%98%E5%BD%95/">why-design系列摘录</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/TCP%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">TCP面试常见问题总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-24
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>转载</p>
+    <div class="post-content">加密的目的不是别的，就是因为这篇文章写得不好，没有看的意义，不浪费大家的宝贵时间。
           <div class="read-more">
-            <a href="/2020/12/24/why-design%E7%B3%BB%E5%88%97%E6%91%98%E5%BD%95/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/TCP%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/24/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E8%AF%95%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98/">操作系统面试相关问题</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/redis%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">redis面试常见问题总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-24
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>迫于面试 所以整理一下常见问题 。导致现在的博客质量很低，也没有用心写。过后一定改正。</p>
+    <div class="post-content">加密的目的不是别的，就是因为这篇文章写得不好，没有看的意义，不浪费大家的宝贵时间。
           <div class="read-more">
-            <a href="/2020/12/24/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E8%AF%95%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/redis%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/23/12%E6%9C%88%E7%8A%B6%E6%80%81%E9%9A%8F%E6%83%B3/">12月状态随想</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/30/mysql%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">mysql面试常见问题总结</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-23
+          2020-12-30
         </span></div>
     </header>
 
-    <div class="post-content"><p>碎碎念</p>
-<p>现在是什么状态呢。好又是不好的状态。</p>
+    <div class="post-content">加密的目的不是别的，就是因为这篇文章写得不好，没有看的意义，不浪费大家的宝贵时间。
           <div class="read-more">
-            <a href="/2020/12/23/12%E6%9C%88%E7%8A%B6%E6%80%81%E9%9A%8F%E6%83%B3/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/30/mysql%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/22/HTTP%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84%E5%8F%8ATCP%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84/">HTTP报文结构及TCP报文结构</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/29/LeetCode-k%E4%B8%AA%E9%97%AE%E9%A2%98/">LeetCode-k个问题</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-22
+          2020-12-29
         </span></div>
     </header>
 
-    <div class="post-content"><p>同上，是之前没回答上来的问题。</p>
+    <div class="post-content"><p>这是个不能称作集合的集合</p>
           <div class="read-more">
-            <a href="/2020/12/22/HTTP%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84%E5%8F%8ATCP%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/29/LeetCode-k%E4%B8%AA%E9%97%AE%E9%A2%98/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <article class="post">
     <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/22/TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B%E6%95%B4%E7%90%86/">TCP四次挥手整理</a>
+      <h1 class="post-title"><a class="post-link" href="/2020/12/29/sql%E9%A2%98%E6%94%B6%E5%BD%95/">sql题收录</a>
         </h1>
 
       <div class="post-meta">
         <span class="post-time">
-          2020-12-22
+          2020-12-29
         </span></div>
     </header>
 
-    <div class="post-content"><p>昨天面试计算机网络相关的问题都没答上。甚是羞愧。故而整理一下文章。</p>
+    <div class="post-content"><p>收录一些比较有意思的sql题，纯粹图一乐</p>
           <div class="read-more">
-            <a href="/2020/12/22/TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B%E6%95%B4%E7%90%86/" class="read-more-link">Read more..</a>
-          </div>
-        </div></article>
-      <article class="post">
-    <header class="post-header">
-      <h1 class="post-title"><a class="post-link" href="/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/">LEETCODE-LRU探究</a>
-        </h1>
-
-      <div class="post-meta">
-        <span class="post-time">
-          2020-12-20
-        </span></div>
-    </header>
-
-    <div class="post-content"><p>Leetcode上看到这题，感觉是个很有意思的题目，好好整一整</p>
-          <div class="read-more">
-            <a href="/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/" class="read-more-link">Read more..</a>
+            <a href="/2020/12/29/sql%E9%A2%98%E6%94%B6%E5%BD%95/" class="read-more-link">Read more..</a>
           </div>
         </div></article>
       <nav class="pagination"><a class="next" href="/page/2/">

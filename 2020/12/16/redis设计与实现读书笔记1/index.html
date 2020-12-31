@@ -253,7 +253,7 @@
 <p>另外，当一个哈希键只包含少量键值对，且每个键值对的键和值要么是小整数值，要么是长度较短的字符串，就会使用ziplist作为哈希键的底层实现。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; HMSET profile “name” “Jack<span class="string">&quot; &quot;</span>age<span class="string">&quot; 28 &quot;</span>job<span class="string">&quot; &quot;</span>Programmer<span class="string">&quot;</span></span><br><span class="line"><span class="string">&gt; OBJECT ENCODING profile</span></span><br><span class="line"><span class="string">  &quot;</span>ziplist<span class="string">&quot;</span></span><br></pre></td></tr></table></figure>
 
-<h4 id="ziplist构成"><a href="#ziplist构成" class="headerlink" title="ziplist构成"></a>ziplist构成</h4><p>ziplist是Redis为了节约内存而开发的，是由一系列特殊编码的连续内存块组成的顺序型数据结构，一个ziplist可以保持任意多个节点(entry),每一个节点可以保存一个字节数组或者一个整数值。</p>
+<h4 id="ziplist构成"><a href="#ziplist构成" class="headerlink" title="ziplist构成"></a>ziplist构成</h4><p>ziplist是Redis为了节约内存而开发的，是由一系列特殊编码的<strong>连续内存块</strong>组成的顺序型数据结构，一个ziplist可以保持任意多个节点(entry),<strong>每一个节点可以保存一个字节数组或者一个整数值</strong>。</p>
 <p><img src="https://img-blog.csdnimg.cn/20201216164130889.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pzdG9uZTE=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
 <p><img src="https://img-blog.csdnimg.cn/20201216164336845.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pzdG9uZTE=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
 <hr>
@@ -274,7 +274,7 @@
         
         <nav class="post-nav"><a class="prev" href="/2020/12/17/LEETCODE-%E5%8F%8D%E8%BD%AC%E9%93%BE%E8%A1%A8%E7%9B%B8%E5%85%B3/">
         <i class="iconfont icon-left"></i>
-        <span class="prev-text nav-default">LEETCODE:反转链表相关</span>
+        <span class="prev-text nav-default">LeetCode:反转链表相关</span>
         <span class="prev-text nav-mobile">Prev</span>
       </a>
     <a class="next" href="/2020/12/09/%E7%9F%A5%E4%B9%8E%E7%AD%94%E6%A1%88%E6%91%98%E5%BD%95/">

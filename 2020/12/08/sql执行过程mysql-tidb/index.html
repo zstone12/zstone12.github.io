@@ -121,8 +121,8 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from T where Id = <span class="number">10</span>;</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
 
 <p>如图，我们先了解一下MySQL的基本架构示意图。<br><img src="https://img-blog.csdnimg.cn/20200708162607673.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1h1bXV5YW5nXw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>整体来看，MySQL分为<code>Server层</code>和<code>存储引擎层</code>两部分。</p>
-<p>Server层包括连接器、查询缓存、分析器、优化器、执行器等，包含了大多数核心功能，以及所有内置函数（如日期、时间、数学和加密函数等），所有涉及到跨存储引擎的功能都在这一层实现，如存储过程、触发器、视图等</p>
-<p>存储引擎层负责数据的存储和提取。它的架构模式是插件式的，支持InnoDB、MyISAM、Memory等。我们最多使用的是InnoDB，因为它是MySQL 5.5.5版本后的默认存储引擎。</p>
+<p>​    Server层包括连接器、查询缓存、分析器、优化器、执行器等，包含了大多数核心功能，以及所有内置函数（如日期、时间、数学和加密函数等），所有涉及到跨存储引擎的功能都在这一层实现，如存储过程、触发器、视图等。</p>
+<p>​    存储引擎层负责数据的存储和提取。它的架构模式是插件式的，支持InnoDB、MyISAM、Memory等。我们最多使用的是InnoDB，因为它是MySQL 5.5.5版本后的默认存储引擎。</p>
 <p>从图中可以看出，多种存储引擎公用一个Server层，也就是从连接器到执行器的部分。</p>
 <h3 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h3><p>首先，会连接到数据库上，这时候就是连接器起的作用。连接器负责跟客户端建立连接、获取权限、维持和管理连接。连接命令：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql -h$ip -P$port -u$user -p</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
@@ -173,9 +173,9 @@
       
       <footer class="post-footer">
         
-        <nav class="post-nav"><a class="prev" href="/2020/12/08/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">
+        <nav class="post-nav"><a class="prev" href="/2020/12/09/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E8%AE%BE%E8%AE%A1%E7%B2%BE%E8%A6%81-%E6%91%98%E8%A6%81/">
         <i class="iconfont icon-left"></i>
-        <span class="prev-text nav-default">2020年终总结</span>
+        <span class="prev-text nav-default">消息队列设计精要_摘录</span>
         <span class="prev-text nav-mobile">Prev</span>
       </a>
     <a class="next" href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">

@@ -128,7 +128,7 @@
 <p>被动方收到后关闭连接。</p>
 <p>主动方等待2MSL 后关闭连接。</p>
 <p>这用嘴说容易糊。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">A(主动关闭)      B(被动关闭)</span><br><span class="line">established   established</span><br><span class="line">fin-wait-1		-&gt;FIN&#x3D;1   |</span><br><span class="line"> |                      |</span><br><span class="line"> |  &lt;-ACK&#x3D;1			close_wait</span><br><span class="line"> | 											|</span><br><span class="line"> fin-wait-2             |</span><br><span class="line"> |       数据传送        |</span><br><span class="line"> |		&lt;-ACK&#x3D;1 FIN&#x3D;1  LASK_ACK</span><br><span class="line"> |											|</span><br><span class="line"> TIME_WAIT -&gt;ACK&#x3D;1      |</span><br><span class="line"> |                      |</span><br><span class="line"> | 											CLOSED</span><br><span class="line"> | 2msl									|</span><br><span class="line"> CLOSED</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">A(主动关闭)      B(被动关闭)</span><br><span class="line">established   established</span><br><span class="line">fin-wait-1		-&gt;FIN&#x3D;1   |</span><br><span class="line"> |                      |</span><br><span class="line"> |  &lt;-ACK&#x3D;1				close_wait</span><br><span class="line"> | 											|</span><br><span class="line"> fin-wait-2             |</span><br><span class="line"> |       数据传送        |</span><br><span class="line"> |		&lt;-ACK&#x3D;1 FIN&#x3D;1  LASK_ACK</span><br><span class="line"> |											|</span><br><span class="line"> TIME_WAIT -&gt;ACK&#x3D;1      |</span><br><span class="line"> |                      |</span><br><span class="line"> | 											CLOSED</span><br><span class="line"> | 2msl									|</span><br><span class="line"> CLOSED</span><br></pre></td></tr></table></figure>
 
 <p>昨天要是能把这个图给他一画不是起飞？</p>
 <p>顺势整理下握手阶段的吧。    </p>
@@ -158,7 +158,7 @@
         <span class="prev-text nav-mobile">Prev</span>
       </a>
     <a class="next" href="/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/">
-        <span class="next-text nav-default">LEETCODE-LRU探究</span>
+        <span class="next-text nav-default">LeetCode-LRU探究</span>
         <span class="prev-text nav-mobile">Next</span>
         <i class="iconfont icon-right"></i>
       </a>
