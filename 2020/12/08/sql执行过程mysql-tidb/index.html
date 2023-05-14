@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="SQL 执行过程 MySQL & TiDB"/><meta name="keywords" content="sql, Stone's Blog" /><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/08/sql执行过程mysql-tidb/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>SQL 执行过程 MySQL & TiDB - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">SQL 执行过程 MySQL & TiDB
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-08
+        </span></div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9E%E6%8E%A5%E5%99%A8"><span class="toc-text">连接器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E7%BC%93%E5%AD%98"><span class="toc-text">查询缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%9E%90%E5%99%A8"><span class="toc-text">分析器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%99%A8"><span class="toc-text">优化器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E5%99%A8"><span class="toc-text">执行器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%95%E7%94%A8"><span class="toc-text">引用:</span></a></li></ol></li></ol>
+    </div>
+  </div><div class="post-content"><p>答好一道题比泛泛而谈一百道题更重要。</p>
+<a id="more"></a> 
+
+<p>SQL执行过程</p>
+<p>1.mysql</p>
+<p>我们几乎每天都在写SQL语句，当我们写了一条查询语句，会得到一个查询结果，但是它在MySQL内部是怎样的一个执行过程呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from T where Id = <span class="number">10</span>;</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>如图，我们先了解一下MySQL的基本架构示意图。<br><img src="https://img-blog.csdnimg.cn/20200708162607673.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1h1bXV5YW5nXw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>整体来看，MySQL分为<code>Server层</code>和<code>存储引擎层</code>两部分。</p>
+<p>​    Server层包括连接器、查询缓存、分析器、优化器、执行器等，包含了大多数核心功能，以及所有内置函数（如日期、时间、数学和加密函数等），所有涉及到跨存储引擎的功能都在这一层实现，如存储过程、触发器、视图等。</p>
+<p>​    存储引擎层负责数据的存储和提取。它的架构模式是插件式的，支持InnoDB、MyISAM、Memory等。我们最多使用的是InnoDB，因为它是MySQL 5.5.5版本后的默认存储引擎。</p>
+<p>从图中可以看出，多种存储引擎公用一个Server层，也就是从连接器到执行器的部分。</p>
+<h3 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h3><p>首先，会连接到数据库上，这时候就是连接器起的作用。连接器负责跟客户端建立连接、获取权限、维持和管理连接。连接命令：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql -h$ip -P$port -u$user -p</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>输完命令之后，需要输入密码。</p>
+<p>连接命令中的mysql是客户端的工具，用来跟服务端建立连接。在完成经典的TCP握手之后，连接器就开始认证身份，也就是我们输入用户名和密码后。如果用户名或密码不对，就会报错<code>“Access denied for user”</code>的错误，这将结束客户端的执行；如果用户名和密码认证通过，连接器会到权限表里面查出你拥有的权限，然后这个链接里面的权限判断逻辑，都将依赖于此时读到的权限。</p>
+<p>这意味着，当一个用户成功建立连接后，及时对这个用户的权限做了修改，也不影响当前连接着的权限，只有再次新建连接时才会使用新的权限设置。</p>
+<p>连接完成后，如果没有其他操作，该连接处于空闲状态，如图：<br><img src="https://img-blog.csdnimg.cn/20200708160936701.png" alt="在这里插入图片描述"><br>如果客户端很长时间没有操作，连接器会自动断开。这个时间可由参数<code>wait_timeout</code>控制，默认是8小时。</p>
+<p>数据库里的 <strong>长连接</strong> 是指连接成功后，如果客户端持续有请求，则一直使用同一个连接。<strong>短连接</strong> 则指的是每次执行完很少的几次查询就断开连接，下次查询再重新建立一个。因为建立连接的过程比较复杂，所以建议尽量使用长连接。</p>
+<h3 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h3><p>连接建立完成后，就可以执行select语句了。也就是：查询缓存。</p>
+<p>MySQL拿到一个查询请求后，会先去查询缓存看看之前是不是执行过这个语句。如果执行过，其结果会以key-value对的形式被直接缓存在内存中。如果能够找到缓存中的key，那么这个对应的value就会被直接返回给客户端。</p>
+<p>如果不在查询缓存中，就会继续后面的执行阶段。执行完成后，执行结果会被存入查询缓存中。</p>
+<p>虽然使用查询缓存的效率很高，但实质上使用这种方式不太好。因为查询缓存的失效非常频繁，只要有对一个表的更新，这个表上所有的查询缓存都会被清空。因此很可能存了很多结果，还没使用，就被一个更新清空了…</p>
+<h3 id="分析器"><a href="#分析器" class="headerlink" title="分析器"></a>分析器</h3><p>如果没有命中查询缓存，就该真正执行这个语句去查询了。</p>
+<p>首先，mysql需要知道这条语句是要做什么，因此需要对SQL语句进行解析。首先分析器会做“词法分析”。MySQL需要识别我们输入的多个字符串和空格分别代表什么。MySQL从输入的“select”关键字识别出这是一个查询语句，“T”识别成表名“T”，“ID”识别成“列ID”。然后进行“语法分析”。语法分析器会根据语法规则，判断输入的这个SQL是否满足MySQL语法。<br>如果语句不对，会看到报错<code>You have an error in your SQL syntax</code>提示。</p>
+<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>经过分析器的分析后，MySQL知道要做什么了。开始执行前，还要进行优化器的处理。</p>
+<p>优化器是在表里面有多个索引时，决定使用哪个索引；或者在一个语句有多表关联时，决定各个表的连接顺序。比如有一个两表关联的join：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * <span class="function">from t1 join t2 <span class="title">using</span><span class="params">(ID)</span> where t1.c</span>=<span class="number">10</span> and t2.d=<span class="number">20</span>;</span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>既可以先从表t1里取出c=10的记录的ID值，再根据ID值关联到表t2，再判断t2里面的d的值是否等于20</li>
+<li>也可以先从表t2里取出d=20的记录的ID值，再根据ID值关联到表t1，再判断t1里面的c的值是否等于10</li>
+</ul>
+<p>这两种执行方法的结果一样，但是执行效率可能不同。优化器的作用就是选择一种效率更高的方式执行。</p>
+<p>优化器阶段完成后，这个语句的执行方案就确定了，然后开始进入执行阶段。</p>
+<h3 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h3><p>开始执行的时候，要先判断一下当前用户有没有查询表T的权限。如果没有，就会返回没有权限的错误：<br><img src="https://img-blog.csdnimg.cn/2020070816172877.png" alt="在这里插入图片描述"><br>如果有权限，就会打开表继续执行。打开表时，执行器会根据表的引擎定义去使用这个引擎提供的接口。</p>
+<p>比如在表T中，ID字段没有索引，那么执行器的执行流程是这样的：</p>
+<ol>
+<li>调用InnoDB引擎接口取该表第一行，判断ID值是不是10，如果不是则跳过，如果是则将这行存在结果集中；</li>
+<li>调用引擎接口取“下一行”，重复相同的判断逻辑，直到取到这个表的最后一行。</li>
+<li>执行器将上面遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。</li>
+</ol>
+<p>这条语句到这就执行完成了。</p>
+<p>对于有索引的表，执行逻辑差不多。第一次调用的是“<strong>取满足条件的第一行</strong>”这个接口，之后循环取“<strong>满足条件的下一行</strong>”这个接口，这些接口在引擎中已经定义好了。</p>
+<p>在数据库的慢查询日志中看到的<code>rows_examined</code>字段表示这个语句执行过程中扫描了多少航。这个值就是执行器每次调用执行引擎获取数据行的时候累加的。</p>
+<hr>
+<p>稍微总结一下:</p>
+<p>1.先建立连接2.查询缓存3.分析器 进行语法分析 词法分析，生成抽象语法树 4.优化器 比如走索引5.执行器，权限检验，调用存储引擎，给客户端返回数据</p>
+<hr>
+<p>2.tidb</p>
+<p><img src="https://download.pingcap.com/images/blog-cn/tidb-source-code-reading-3/2.png" alt="SQL 层执行过程"></p>
+<h4 id="引用"><a href="#引用" class="headerlink" title="引用:"></a>引用:</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/Xumuyang_/article/details/107207370">https://blog.csdn.net/Xumuyang_/article/details/107207370</a></li>
+<li><a target="_blank" rel="noopener" href="https://pingcap.com/blog-cn/tidb-source-code-reading-3/">https://pingcap.com/blog-cn/tidb-source-code-reading-3/</a></li>
+</ul>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/">http://example.com/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/sql/">sql</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/16/redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B01/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Redis 设计与实现读书笔记(一)</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">
+        <span class="next-text nav-default">MySQL 如何实现事务</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>

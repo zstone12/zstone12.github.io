@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="SQL 题整理"/><meta name="keywords" content="LeetCode, Stone's Blog" /><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/29/sql题收录/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>SQL 题整理 - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">SQL 题整理
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-29
+        </span></div>
+    </header>
+
+    <div class="post-content"><p>收录一些比较有意思的sql题，纯粹图一乐</p>
+<a id="more"></a> 
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Employee 表包含所有员工，他们的经理也属于员工。每个员工都有一个 Id，此外还有一列对应员工的经理的 Id。</span><br><span class="line"></span><br><span class="line">+----+-------+--------+-----------+</span><br><span class="line">| Id | Name  | Salary | ManagerId |</span><br><span class="line">+----+-------+--------+-----------+</span><br><span class="line">| 1  | Joe   | 70000  | 3         |</span><br><span class="line">| 2  | Henry | 80000  | 4         |</span><br><span class="line">| 3  | Sam   | 60000  | NULL      |</span><br><span class="line">| 4  | Max   | 90000  | NULL      |</span><br><span class="line">+----+-------+--------+-----------+</span><br><span class="line">给定 Employee 表，编写一个 SQL 查询，该查询可以获取收入超过他们经理的员工的姓名。在上面的表格中，Joe 是唯一一个收入超过他的经理的员工。</span><br><span class="line"></span><br><span class="line">+----------+</span><br><span class="line">| Employee |</span><br><span class="line">+----------+</span><br><span class="line">| Joe      |</span><br><span class="line">+----------+</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>倒挂 。收集倒挂的同学 哈哈 代码太优美了~</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> a.Name Employee</span><br><span class="line">    <span class="keyword">from</span> Employee a</span><br><span class="line">    <span class="keyword">join</span> Employee b</span><br><span class="line">    <span class="keyword">on</span> a.ManagerId <span class="operator">=</span> b.Id <span class="keyword">and</span> a.Salary<span class="operator">&gt;</span>b.Salary</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>182.查找重复的电子邮箱</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">编写一个 SQL 查询，查找 Person 表中所有重复的电子邮箱。</span><br><span class="line"></span><br><span class="line">示例：</span><br><span class="line"></span><br><span class="line">+----+---------+</span><br><span class="line">| Id | Email   |</span><br><span class="line">+----+---------+</span><br><span class="line">| 1  | a@b.com |</span><br><span class="line">| 2  | c@d.com |</span><br><span class="line">| 3  | a@b.com |</span><br><span class="line">+----+---------+</span><br><span class="line">根据以上输入，你的查询应返回以下结果：</span><br><span class="line"></span><br><span class="line">+---------+</span><br><span class="line">| Email   |</span><br><span class="line">+---------+</span><br><span class="line">| a@b.com |</span><br><span class="line">+---------+</span><br></pre></td></tr></table></figure>
+
+<p>就是group by的简单应用 记住having</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> Email</span><br><span class="line"><span class="keyword">from</span> Person</span><br><span class="line"><span class="keyword">group</span> <span class="keyword">by</span> Email</span><br><span class="line"><span class="keyword">having</span> <span class="built_in">count</span>(Email)<span class="operator">&gt;=</span><span class="number">2</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>183.从不订购的客户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">某网站包含两个表，Customers 表和 Orders 表。编写一个 SQL 查询，找出所有从不订购任何东西的客户。</span><br><span class="line"></span><br><span class="line">Customers 表：</span><br><span class="line"></span><br><span class="line">+----+-------+</span><br><span class="line">| Id | Name  |</span><br><span class="line">+----+-------+</span><br><span class="line">| 1  | Joe   |</span><br><span class="line">| 2  | Henry |</span><br><span class="line">| 3  | Sam   |</span><br><span class="line">| 4  | Max   |</span><br><span class="line">+----+-------+</span><br><span class="line">Orders 表：</span><br><span class="line"></span><br><span class="line">+----+------------+</span><br><span class="line">| Id | CustomerId |</span><br><span class="line">+----+------------+</span><br><span class="line">| 1  | 3          |</span><br><span class="line">| 2  | 1          |</span><br><span class="line">+----+------------+</span><br><span class="line">例如给定上述表格，你的查询应返回：</span><br><span class="line"></span><br><span class="line">+-----------+</span><br><span class="line">| Customers |</span><br><span class="line">+-----------+</span><br><span class="line">| Henry     |</span><br><span class="line">| Max       |</span><br><span class="line">+-----------+</span><br></pre></td></tr></table></figure>
+
+<p>贼娃子 。先找订购的就行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> Name Customers <span class="keyword">from</span> Customers</span><br><span class="line"><span class="keyword">where</span> id <span class="keyword">not</span> <span class="keyword">in</span>(</span><br><span class="line"><span class="keyword">select</span> <span class="keyword">distinct</span> CustomerId </span><br><span class="line"><span class="keyword">from</span> Orders</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>196.删除重复的电子邮箱</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">编写一个 SQL 查询，来删除 Person 表中所有重复的电子邮箱，重复的邮箱里只保留 Id 最小 的那个。</span><br><span class="line"></span><br><span class="line">+----+------------------+</span><br><span class="line">| Id | Email            |</span><br><span class="line">+----+------------------+</span><br><span class="line">| 1  | john@example.com |</span><br><span class="line">| 2  | bob@example.com  |</span><br><span class="line">| 3  | john@example.com |</span><br><span class="line">+----+------------------+</span><br><span class="line">Id 是这个表的主键。</span><br><span class="line">例如，在运行你的查询语句之后，上面的 Person 表应返回以下几行:</span><br><span class="line"></span><br><span class="line">+----+------------------+</span><br><span class="line">| Id | Email            |</span><br><span class="line">+----+------------------+</span><br><span class="line">| 1  | john@example.com |</span><br><span class="line">| 2  | bob@example.com  |</span><br><span class="line">+----+------------------+</span><br></pre></td></tr></table></figure>
+
+<p>又是一个漂亮的自连接 删除Email相同id大的那个</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DELETE</span> p1 <span class="keyword">FROM</span> Person p1,</span><br><span class="line">    Person p2</span><br><span class="line"><span class="keyword">WHERE</span> </span><br><span class="line">    p1.Email <span class="operator">=</span> p2.Email <span class="keyword">AND</span> p1.Id <span class="operator">&gt;</span> p2.Id</span><br></pre></td></tr></table></figure>
+
+<p>不行 sql写着写着犯困 得做些别的事</p>
+<hr>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">表 Weather</span><br><span class="line"></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+---------+</span></span><br><span class="line"><span class="operator">|</span> <span class="keyword">Column</span> Name   <span class="operator">|</span> Type    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+---------+</span></span><br><span class="line"><span class="operator">|</span> id            <span class="operator">|</span> <span class="type">int</span>     <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> recordDate    <span class="operator">|</span> <span class="type">date</span>    <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> temperature   <span class="operator">|</span> <span class="type">int</span>     <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+---------+</span></span><br><span class="line">id 是这个表的主键</span><br><span class="line">该表包含特定日期的温度信息</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">编写一个 <span class="keyword">SQL</span> 查询，来查找与之前（昨天的）日期相比温度更高的所有日期的 id 。</span><br><span class="line"></span><br><span class="line">返回结果 不要求顺序 。</span><br><span class="line"></span><br><span class="line">查询结果格式如下例：</span><br><span class="line"></span><br><span class="line">Weather</span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> id <span class="operator">|</span> recordDate <span class="operator">|</span> Temperature <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">1</span>  <span class="operator">|</span> <span class="number">2015</span><span class="number">-01</span><span class="number">-01</span> <span class="operator">|</span> <span class="number">10</span>          <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">2</span>  <span class="operator">|</span> <span class="number">2015</span><span class="number">-01</span><span class="number">-02</span> <span class="operator">|</span> <span class="number">25</span>          <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">3</span>  <span class="operator">|</span> <span class="number">2015</span><span class="number">-01</span><span class="number">-03</span> <span class="operator">|</span> <span class="number">20</span>          <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">4</span>  <span class="operator">|</span> <span class="number">2015</span><span class="number">-01</span><span class="number">-04</span> <span class="operator">|</span> <span class="number">30</span>          <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+-------------+</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">Result</span> <span class="keyword">table</span>:</span><br><span class="line"><span class="operator">+</span><span class="comment">----+</span></span><br><span class="line"><span class="operator">|</span> id <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">2</span>  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">4</span>  <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+</span></span><br><span class="line"><span class="number">2015</span><span class="number">-01</span><span class="number">-02</span> 的温度比前一天高（<span class="number">10</span> <span class="operator">-</span><span class="operator">&gt;</span> <span class="number">25</span>）</span><br><span class="line"><span class="number">2015</span><span class="number">-01</span><span class="number">-04</span> 的温度比前一天高（<span class="number">20</span> <span class="operator">-</span><span class="operator">&gt;</span> <span class="number">30</span>）</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    weather.id <span class="keyword">AS</span> <span class="string">&#x27;Id&#x27;</span></span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">    weather</span><br><span class="line">        <span class="keyword">JOIN</span></span><br><span class="line">    weather w <span class="keyword">ON</span> DATEDIFF(weather.recordDate, w.recordDate) <span class="operator">=</span> <span class="number">1</span></span><br><span class="line">        <span class="keyword">AND</span> weather.Temperature <span class="operator">&gt;</span> w.Temperature</span><br><span class="line">;</span><br></pre></td></tr></table></figure>
+
+<p>真不写了 疯狂走神。</p>
+<hr>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/29/sql%E9%A2%98%E6%94%B6%E5%BD%95/">http://example.com/2020/12/29/sql%E9%A2%98%E6%94%B6%E5%BD%95/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/LeetCode/">LeetCode</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/29/LeetCode-k%E4%B8%AA%E9%97%AE%E9%A2%98/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">LeetCode-K 个问题</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/28/LEETCODE-%E4%BD%8D%E8%BF%90%E7%AE%97/">
+        <span class="next-text nav-default">LeetCode-位运算</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>

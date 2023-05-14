@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="MySQL 如何实现事务"/><meta name="keywords" content="Mysql, Stone's Blog" /><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/08/mysql如何实现事务/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>MySQL 如何实现事务 - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">MySQL 如何实现事务
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-08
+        </span><span class="post-category">
+            <a href="/categories/Tech/">Tech</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8E%9F%E5%AD%90%E6%80%A7"><span class="toc-text">原子性:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8C%81%E4%B9%85%E6%80%A7"><span class="toc-text">持久性</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9E%E6%BB%9A%E6%97%A5%E5%BF%97%E5%92%8C%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97"><span class="toc-text">回滚日志和重做日志</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9A%94%E7%A6%BB%E6%80%A7"><span class="toc-text">隔离性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">隔离级别的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%94%81"><span class="toc-text">锁</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E6%88%B3"><span class="toc-text">时间戳</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A%E7%89%88%E6%9C%AC%E5%92%8C%E5%BF%AB%E7%85%A7%E9%9A%94%E7%A6%BB"><span class="toc-text">多版本和快照隔离</span></a></li></ol>
+    </div>
+  </div><div class="post-content"><p>mysql如何实现事务</p>
+<a id="more"></a> 
+
+<h4 id="原子性"><a href="#原子性" class="headerlink" title="原子性:"></a>原子性:</h4><p>想要保证事务的原子性，就需要在异常发生时，对已经执行的操作进行<strong>回滚</strong>而在 MySQL 中，恢复机制是通过<em>回滚日志</em>（undo log）实现的，所有事务进行的修改都会先记录到这个回滚日志中，然后在对数据库中的对应行进行写入。</p>
+<p>这个过程其实非常好理解，为了能够在发生错误时撤销之前的全部操作，肯定是需要将之前的操作都记录下来的，这样在发生错误时才可以回滚。</p>
+<p>回滚日志除了能够在发生错误或者用户执行 <code>ROLLBACK</code> 时提供回滚相关的信息，它还能够在整个系统发生崩溃、数据库进程直接被杀死后，当用户再次启动数据库进程时，<strong>还能够立刻通过查询回滚日志将之前未完成的事务进行回滚</strong>，这也就需要回滚日志必须先于数据持久化到磁盘上，是我们需要先写日志后写数据库的主要原因。</p>
+<p>回滚日志并不能将数据库物理地恢复到执行语句或者事务之前的样子；它是逻辑日志</p>
+<hr>
+<h4 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h4><p>既然是数据库，那么一定对数据的持久存储有着非常强烈的需求，如果数据被写入到数据库中，那么数据一定能够被安全存储在磁盘上；<strong>而事务的持久性就体现在，一旦事务被提交，那么数据一定会被写入到数据库中并持久存储起来。</strong></p>
+<p>当事务已经被提交之后，就无法再次回滚了，唯一能够撤回已经提交的事务的方式就是创建一个相反的事务对原操作进行『补偿』，这也是事务持久性的体现之一。</p>
+<p>与原子性一样，事务的持久性也是通过日志来实现的，MySQL 使用重做日志（redo log）实现事务的持久性，<strong>重做日志由两部分组成，一是内存中的重做日志缓冲区，因为重做日志缓冲区在内存中，所以它是易失的，另一个就是在磁盘上的重做日志文件，它是持久的。</strong></p>
+<p>当我们在一个事务中尝试对数据进行修改时，<strong>它会先将数据从磁盘读入内存，并更新内存中缓存的数据，然后生成一条重做日志并写入重做日志缓存，当事务真正提交时，MySQL 会将重做日志缓存中的内容刷新到重做日志文件，再将内存中的数据更新到磁盘上</strong>，图中的第 4、5 步就是在事务提交时执行的。</p>
+<hr>
+<h3 id="回滚日志和重做日志"><a href="#回滚日志和重做日志" class="headerlink" title="回滚日志和重做日志"></a>回滚日志和重做日志</h3><p>到现在为止我们了解了 MySQL 中的两种日志，回滚日志（undo log）和重做日志（redo log）；在数据库系统中，事务的原子性和持久性是由事务日志（transaction log）保证的，在实现时也就是上面提到的两种日志，前者用于对事务的影响进行撤销，后者在错误处理时对已经提交的事务进行重做，它们能保证两点：</p>
+<ol>
+<li>发生错误或者需要回滚的事务能够成功回滚（原子性）；</li>
+<li>在事务提交后，数据没来得及写会磁盘就宕机时，在下次重新启动后能够成功恢复数据（持久性）；</li>
+</ol>
+<hr>
+<p>在数据库中，这两种日志经常都是一起工作的，我们<strong>可以</strong>将它们整体看做一条事务日志，其中包含了事务的 ID、修改的行元素以及修改前后的值。</p>
+<hr>
+<h2 id="隔离性"><a href="#隔离性" class="headerlink" title="隔离性"></a>隔离性</h2><ul>
+<li><code>RAED UNCOMMITED</code>：使用查询语句不会加锁，可能会读到未提交的行（Dirty Read）；</li>
+<li><code>READ COMMITED</code>：只对记录加记录锁，而不会在记录之间加间隙锁，所以允许新的记录插入到被锁定记录的附近，所以再多次使用查询语句时，可能得到不同的结果（Non-Repeatable Read）；<ul>
+<li><code>REPEATABLE READ</code>：多次读取同一范围的数据会返回第一次查询的快照，不会返回不同的数据行，但是可能发生幻读（Phantom Read）；    </li>
+</ul>
+</li>
+<li><code>SERIALIZABLE</code>：InnoDB 隐式地将全部的查询语句加上共享锁，解决了幻读的问题；</li>
+</ul>
+<hr>
+<p>1.使用查询语句不会加锁，读到未提交的数据。</p>
+<p>2.只对<strong>记录加记录锁</strong>，而不会在记录之间间隙锁。所以允许新的记录插入到被锁定记录的附近，所以再多次使用查询语句时，可能得到不同的结果。</p>
+<p>3.多次查询同一范围的数据会返回第一次查询的快照，不会返回不同的数据行，但是可能发生幻读。</p>
+<p>4.Innodb隐式地将全部的查询语句加上共享锁，解决了幻读的问题。</p>
+<p>以上的所有的事务隔离级别都不允许脏写入（Dirty Write），也就是当前事务更新了另一个事务已经更新但是还未提交的数据，大部分的数据库中都使用了 READ COMMITED 作为默认的事务隔离级别，但是 MySQL 使用了 REPEATABLE READ 作为默认配置；从 RAED UNCOMMITED 到 SERIALIZABLE，随着事务隔离级别变得越来越严格，数据库对于并发执行事务的性能也逐渐下降。</p>
+<hr>
+<h3 id="隔离级别的实现"><a href="#隔离级别的实现" class="headerlink" title="隔离级别的实现"></a>隔离级别的实现</h3><p>数据库对于隔离级别的实现就是使用<strong>并发控制机制</strong>对在同一时间执行的事务进行控制，限制不同的事务对于同一资源的访问和更新，而最重要也最常见的并发控制机制，在这里我们将简单介绍三种最重要的并发控制器机制的工作原理。</p>
+<hr>
+<h4 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h4><p>锁是一种最为常见的并发控制机制，在一个事务中，我们并不会将整个数据库都加锁，而是只会锁住那些需要访问的数据项， MySQL 和常见数据库中的锁都分为两种，共享锁（Shared）和互斥锁（Exclusive），前者也叫读锁，后者叫写锁。</p>
+<h4 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h4><p>除了锁，另一种实现事务的隔离性的方式就是通过时间戳，使用这种方式实现事务的数据库，例如 PostgreSQL 会为每一条记录保留两个字段；<em>读时间戳</em>中包括了所有访问该记录的事务中的最大时间戳，而记录行的<em>写时间戳</em>中保存了将记录改到当前值的事务的时间戳。</p>
+<p>使用时间戳实现事务的隔离性时，往往都会使用乐观锁，先对数据进行修改，在写回时再去判断当前值，也就是时间戳是否改变过，如果没有改变过，就写入，否则，生成一个新的时间戳并再次更新数据，乐观锁其实并不是真正的锁机制，它只是一种思想，在这里并不会对它进行展开介绍。</p>
+<h4 id="多版本和快照隔离"><a href="#多版本和快照隔离" class="headerlink" title="多版本和快照隔离"></a>多版本和快照隔离</h4><p>通过维护多个版本的数据，<strong>数据库可以允许事务在数据被其他事务更新时对旧版本的数据进行读取</strong>，很多数据库都对这一机制进行了实现；因为所有的读操作不再需要等待写锁的释放，所以能够显著地提升读的性能，MySQL 和 PostgreSQL 都对这一机制进行自己的实现，也就是 MVCC，虽然各自实现的方式有所不同，MySQL 就通过文章中提到的回滚日志实现了 MVCC，<strong>保证事务并行执行时能够不等待互斥锁的释放直接获取数据</strong>。</p>
+<hr>
+<p>如果一个事务原子地在一个一致地数据库中独立运行，那么在它执行之后，数据库的状态一定是一致的。</p>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">http://example.com/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/Mysql/">Mysql</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/08/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8Bmysql-tidb/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">SQL 执行过程 MySQL & TiDB</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/">
+        <span class="next-text nav-default">如何实现 Zset</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>

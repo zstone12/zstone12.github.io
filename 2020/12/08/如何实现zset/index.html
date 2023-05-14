@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="如何实现 Zset"/><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/08/如何实现zset/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>如何实现 Zset - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">如何实现 Zset
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-08
+        </span></div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#redis%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88zset%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E2%80%94%E2%80%94%E8%B7%B3%E8%B7%83%E8%A1%A8skiplist"><span class="toc-text">redis有序集合zset的底层实现——跳跃表skiplist</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#skiplist%E5%8E%9F%E7%90%86"><span class="toc-text">skiplist原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%89%BE%E8%BF%87%E7%A8%8B"><span class="toc-text">查找过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E8%BF%87%E7%A8%8B"><span class="toc-text">插入过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E8%BF%87%E7%A8%8B"><span class="toc-text">删除过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%92%E5%90%8D%E6%98%AF%E6%80%8E%E4%B9%88%E7%AE%97%E5%87%BA%E6%9D%A5%E7%9A%84"><span class="toc-text">排名是怎么算出来的</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </div><div class="post-content"><p>搞懂skiplist,再搞一搞ziplist</p>
+<a id="more"></a> 
+
+<h1 id="redis有序集合zset的底层实现——跳跃表skiplist"><a href="#redis有序集合zset的底层实现——跳跃表skiplist" class="headerlink" title="redis有序集合zset的底层实现——跳跃表skiplist"></a>redis有序集合zset的底层实现——跳跃表skiplist</h1><p>skiplist</p>
+<p>搞懂skiplist 再搞一搞ziplist</p>
+<hr>
+<p>跳跃表是有序单链表的一种改进，其查询、插入、删除也是O(logN)的时间复杂度。</p>
+<p><img src="https://img-blog.csdnimg.cn/20190705174140317.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2RhX2thb19sYQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<hr>
+<p>问题就在于是如何实现有序的？</p>
+<hr>
+<h2 id="skiplist原理"><a href="#skiplist原理" class="headerlink" title="skiplist原理"></a>skiplist原理</h2><p>普通有序链表的插入需要一个一个向前查找是否可以插入，所以时间复杂度为O(N)，比如下面这个链表插入23，就需要一直查找到22和26之间。</p>
+<p><img src="https://user-gold-cdn.xitu.io/2019/12/28/16f4cdf8de59fcc7?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img"></p>
+<p>如果节点能够跳过一些节点，连接到更靠后的节点就可以优化插入速度：</p>
+<p><img src="https://user-gold-cdn.xitu.io/2019/12/28/16f4ce042d683d4e?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img"></p>
+<p>在上面这个结构中，插入23的过程是</p>
+<ul>
+<li>先使用第2层链接head-&gt;7-&gt;19-&gt;26，发现26比23大，就回到19</li>
+<li>再用第1层连接19-&gt;22-&gt;26，发现比23大，那么就插入到26之前，22之后</li>
+</ul>
+<p>上面这张图就是跳表的初步原理，但一个元素插入链表后，应该拥有几层连接呢？跳表在这块的实现方式是随机的，也就是23这个元素插入后，随机出一个数，比如这个数是3，那么23就会有如下连接：</p>
+<ul>
+<li>第3层head-&gt;23-&gt;end</li>
+<li>第2层19-&gt;23-&gt;26</li>
+<li>第1层22-&gt;23-&gt;26</li>
+</ul>
+<p>所以通过有序和和多指针来提高速度。有点那种二分的意思。</p>
+<hr>
+<p>结一下跳表原理：</p>
+<ul>
+<li>每个跳表都必须设定一个最大的连接层数MaxLevel</li>
+<li>第一层连接会连接到表中的每个元素</li>
+<li>插入一个元素会随机生成一个<strong>连接层数值[1, MaxLevel]之间，根据这个值跳表会给这元素建立N个连接</strong></li>
+<li><strong>插入某个元素的时候先从最高层开始，当跳到比目标值大的元素后，回退到上一个元素，用该元素的下一层连接进行遍历，周而复始直到第一层连接，最终在第一层连接中找到合适的位置</strong></li>
+</ul>
+<p>这太骚了</p>
+<hr>
+<p>redis中skiplist的MaxLevel设定为32层</p>
+<p>skiplist原理中提到skiplist一个元素插入后，会随机分配一个层数，而redis的实现，这个随机的规则是：</p>
+<ul>
+<li>一个元素拥有第1层连接的概率为100%</li>
+<li>一个元素拥有第2层连接的概率为50%</li>
+<li>一个元素拥有第3层连接的概率为25%</li>
+<li>以此类推…</li>
+</ul>
+<p>为了提高搜索效率，redis会缓存MaxLevel的值，在每次插入/删除节点后都会去更新这个值，这样每次搜索的时候不需要从32层开始搜索，而是从MaxLevel指定的层数开始搜索</p>
+<hr>
+<h3 id="查找过程"><a href="#查找过程" class="headerlink" title="查找过程"></a>查找过程</h3><p>对于zrangebyscore命令：score作为查找的对象，在跳表中跳跃查询，就和上面skiplist的查询一样</p>
+<hr>
+<h3 id="插入过程"><a href="#插入过程" class="headerlink" title="插入过程"></a>插入过程</h3><p>zadd [zset name] [score] [value]：</p>
+<ul>
+<li>在map中查找value是否已存在，如果存在现需要在skiplist中找到对应的元素删除，再在skiplist做插入</li>
+<li>插入过程也是用score来作为查询位置的依据，和skiplist插入元素方法一样。并需要更新value-&gt;score的map</li>
+</ul>
+<p>如果score一样怎么办？根据value再排序，按照顺序插入</p>
+<hr>
+<h3 id="删除过程"><a href="#删除过程" class="headerlink" title="删除过程"></a>删除过程</h3><p>zrem [zset name] [value]：从<strong>map</strong>中找到value所对应的score，然后再在跳表中搜索这个score,value对应的节点，并删除</p>
+<hr>
+<h3 id="排名是怎么算出来的"><a href="#排名是怎么算出来的" class="headerlink" title="排名是怎么算出来的"></a>排名是怎么算出来的</h3><p>zrank [zset name] [value]的实现依赖与一些附加在跳表上的属性：</p>
+<ul>
+<li>跳表的每个元素的Next指针都记录了这个指针能够跨越多少元素，redis在插入和删除元素的时候，都会更新这个值</li>
+<li>然后在搜索的过程中按经过的路径将路径中的span值相加得到rank</li>
+</ul>
+<hr>
+<p>太骚了 redis</p>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/">http://example.com/2020/12/08/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0zset/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/08/mysql%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%BA%8B%E5%8A%A1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">MySQL 如何实现事务</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/10/05/tx%E5%AE%9E%E4%B9%A0%E6%80%BB%E7%BB%93/">
+        <span class="next-text nav-default">腾讯实习总结</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>

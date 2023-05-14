@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="LeetCode-LRU 探究"/><meta name="keywords" content="LeetCode, Stone's Blog" /><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/20/LEETCODE-LRU探究/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>LeetCode-LRU 探究 - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">LeetCode-LRU 探究
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-20
+        </span></div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%9F%BA%E4%BA%8E%E5%93%88%E5%B8%8C%E8%A1%A8%E5%92%8C%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8%E5%AE%9E%E7%8E%B0LRU"><span class="toc-text">1.基于哈希表和双向链表实现LRU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Redis%E7%9A%84LRU%E5%AE%9E%E7%8E%B0"><span class="toc-text">Redis的LRU实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+    </div>
+  </div><div class="post-content"><p>Leetcode上看到这题，感觉是个很有意思的题目，好好整一整</p>
+<a id="more"></a> 
+
+<p><em>LRU</em>(Least recently used,最近最少使用)</p>
+<p>一个经典的使用场景：<strong>CPU的高速缓存</strong></p>
+<hr>
+<h3 id="1-基于哈希表和双向链表实现LRU"><a href="#1-基于哈希表和双向链表实现LRU" class="headerlink" title="1.基于哈希表和双向链表实现LRU"></a>1.基于哈希表和双向链表实现LRU</h3><p>整体的设计思路是，可以使用 HashMap 存储 key，这样可以做到 save 和 get key的时间都是 O(1)，而 HashMap 的 Value 指向双向链表实现的 LRU 的 Node 节点。</p>
+<blockquote>
+<p>有点不太能理解,</p>
+</blockquote>
+<p>貌似我想的并不是很清楚 头有点大</p>
+<p>双向链表的好处在哪呢</p>
+<p>冷静一下</p>
+<p>先上我这个很挫的代码 。复杂度应该都是O(n)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LRUCache</span>:</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 我这个思路 数据反而实际存在hash表里</span></span><br><span class="line"><span class="comment"># 然后维护一个last_used列表</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 把用到的放在队首</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, capacity: <span class="built_in">int</span></span>):</span></span><br><span class="line">        self.max_capacity=capacity</span><br><span class="line">        self.dict_struct=<span class="built_in">dict</span>()</span><br><span class="line">        self.last_used=<span class="built_in">list</span>()</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get</span>(<span class="params">self, key: <span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span></span><br><span class="line">        <span class="comment"># 如果已经在LRU中</span></span><br><span class="line">        <span class="keyword">if</span> key <span class="keyword">in</span> self.dict_struct:</span><br><span class="line">            <span class="keyword">if</span> key <span class="keyword">in</span> self.last_used:</span><br><span class="line">                <span class="keyword">if</span> self.last_used[-<span class="number">1</span>]==key:</span><br><span class="line">                    <span class="keyword">return</span> self.dict_struct[key]</span><br><span class="line">                </span><br><span class="line">                to_pop=-<span class="number">1</span></span><br><span class="line">                <span class="keyword">for</span> index,value <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.last_used):</span><br><span class="line">                    <span class="keyword">if</span> value==key:</span><br><span class="line">                        to_pop=index</span><br><span class="line">                        <span class="keyword">break</span></span><br><span class="line">                </span><br><span class="line">                <span class="comment">#删一个插一个很合理啊</span></span><br><span class="line">                self.last_used.pop(to_pop)</span><br><span class="line">                self.last_used.append(key)</span><br><span class="line">            <span class="comment">#不在缓存队列中</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="keyword">if</span> <span class="built_in">len</span>(self.last_used)==self.max_capacity:</span><br><span class="line">                    self.last_used.pop(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">                self.last_used.append(key)</span><br><span class="line">            <span class="keyword">return</span> self.dict_struct[key]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span></span><br><span class="line">            </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">put</span>(<span class="params">self, key: <span class="built_in">int</span>, value: <span class="built_in">int</span></span>) -&gt; <span class="literal">None</span>:</span></span><br><span class="line">        <span class="comment"># 有足够的空间加入</span></span><br><span class="line">        <span class="keyword">if</span> key <span class="keyword">in</span> self.dict_struct:</span><br><span class="line">            self.dict_struct[key]=value</span><br><span class="line">            to_pop=-<span class="number">1</span></span><br><span class="line">            <span class="keyword">for</span> index,value <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.last_used):</span><br><span class="line">                <span class="keyword">if</span> value==key:</span><br><span class="line">                    to_pop=index</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">                </span><br><span class="line">            self.last_used.pop(to_pop)</span><br><span class="line">            self.last_used.append(key)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(self.last_used)+<span class="number">1</span>&lt;=self.max_capacity:</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">del</span> self.dict_struct[self.last_used[<span class="number">0</span>]]</span><br><span class="line">            self.last_used.pop(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">        self.dict_struct[key]=value        </span><br><span class="line">        self.last_used.append(key)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>麻烦点就在于:</p>
+<ul>
+<li>随机访问</li>
+<li>需要将数据插到头部尾部</li>
+</ul>
+<p>犯困 搞不明白啊。</p>
+<p>二战LRU</p>
+<p>先把设计思路搞清晰，一切就都明朗了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">读</span><br><span class="line">​		-------数据不存在: <span class="keyword">return</span> <span class="number">-1</span></span><br><span class="line">​		-------数据存在: 将数据移动到头(这边设定越靠近头数据越新) 返回数据</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> 写 数据是否存在-&gt;</span><br><span class="line">              	--存在key:定位，修改值，移动到头</span><br><span class="line">                |</span><br><span class="line">                | 不存在key:</span><br><span class="line">								|--------容量达到上限:那就把尾巴的删了 同时对应hashtable里的数据也得删再往头那里写。</span><br><span class="line">  							|	-------容量未达上限:未达上限就只管往头那里写就完了</span><br><span class="line">      </span><br><span class="line"> </span><br><span class="line">  hashtable doubleLinkedlist</span><br><span class="line">  key: 对应值</span><br><span class="line">  </span><br><span class="line">还有一个麻烦点就在于双向链表的实现</span><br><span class="line">注意一下细节.只有当缓存没满时，size在变化</span><br><span class="line">还有就是注意添加的是cache在添加和删除的时候变化</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DLinkListNode</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self,key=<span class="number">0</span>,value=<span class="number">0</span></span>):</span></span><br><span class="line">        self.key=key</span><br><span class="line">        self.value=value</span><br><span class="line">        self.prev=<span class="literal">None</span></span><br><span class="line">        self.<span class="built_in">next</span>=<span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LRUCache</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, capacity: <span class="built_in">int</span></span>):</span></span><br><span class="line">        self.cache=<span class="built_in">dict</span>()</span><br><span class="line">        <span class="comment"># 伪头伪尾</span></span><br><span class="line">        self.tail=DLinkListNode()</span><br><span class="line">        self.head=DLinkListNode()</span><br><span class="line">        self.head.<span class="built_in">next</span>=self.tail</span><br><span class="line">        self.tail.prev=self.head</span><br><span class="line">        self.capacity=capacity</span><br><span class="line">        self.size=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get</span>(<span class="params">self, key: <span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span></span><br><span class="line">        <span class="keyword">if</span> key <span class="keyword">not</span> <span class="keyword">in</span> self.cache:</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span></span><br><span class="line">        node = self.cache[key]</span><br><span class="line">        self.moveToHead(node)</span><br><span class="line">        <span class="keyword">return</span> node.value</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">put</span>(<span class="params">self, key: <span class="built_in">int</span>, value: <span class="built_in">int</span></span>) -&gt; <span class="literal">None</span>:</span></span><br><span class="line">        <span class="keyword">if</span> key <span class="keyword">not</span> <span class="keyword">in</span> self.cache:</span><br><span class="line">            <span class="comment"># 初始化</span></span><br><span class="line">            node = DLinkListNode(key,value)</span><br><span class="line">            self.cache[key]=node</span><br><span class="line">            self.addToHead(node)</span><br><span class="line">            self.size+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> self.size&gt;self.capacity:</span><br><span class="line">                removed = self.removeTail()</span><br><span class="line">                <span class="comment">#pop</span></span><br><span class="line">                self.cache.pop(removed.key)</span><br><span class="line">                self.size-=<span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            node=self.cache[key]</span><br><span class="line">            node.value=value</span><br><span class="line">            self.moveToHead(node)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">addToHead</span>(<span class="params">self,node</span>):</span></span><br><span class="line">        <span class="comment"># o-&gt;o o-&gt;N-&gt;o</span></span><br><span class="line">        head_next = self.head.<span class="built_in">next</span></span><br><span class="line">        node.prev=self.head</span><br><span class="line">        node.<span class="built_in">next</span>=head_next</span><br><span class="line">        head_next.prev=node</span><br><span class="line">        self.head.<span class="built_in">next</span>=node</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">removeNode</span>(<span class="params">self,node</span>):</span></span><br><span class="line">        node.prev.<span class="built_in">next</span>=node.<span class="built_in">next</span></span><br><span class="line">        node.<span class="built_in">next</span>.prev=node.prev</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">moveToHead</span>(<span class="params">self,node</span>):</span></span><br><span class="line">        self.removeNode(node)</span><br><span class="line">        self.addToHead(node)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">removeTail</span>(<span class="params">self</span>):</span></span><br><span class="line">        node = self.tail.prev</span><br><span class="line">        self.removeNode(node)</span><br><span class="line">        <span class="keyword">return</span> node</span><br></pre></td></tr></table></figure>
+
+<p>操作还是封装在LRU里的</p>
+<p>LRU果然没有经过测试的东西就是不可靠的。</p>
+<p>有机会应该走一走单元测试，找点感觉。</p>
+<hr>
+<h3 id="Redis的LRU实现"><a href="#Redis的LRU实现" class="headerlink" title="Redis的LRU实现"></a>Redis的LRU实现</h3><hr>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/34133067">https://zhuanlan.zhihu.com/p/34133067</a><ul>
+<li><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/">https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/</a>    </li>
+</ul>
+</li>
+</ul>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/">http://example.com/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/LeetCode/">LeetCode</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/22/TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B%E6%95%B4%E7%90%86/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">TCP 四次挥手整理</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/20/redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B03-md/">
+        <span class="next-text nav-default">Redis 设计与实现读书笔记(三).md</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="Redis 设计与实现读书笔记(三).md"/><meta name="keywords" content="redis, Stone's Blog" /><link rel="alternate" href="/atom.xml" title="Stone's Blog" type="application/atom+xml"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.2" />
+<link rel="canonical" href="http://example.com/2020/12/20/redis设计与实现读书笔记3-md/"/>
+
+<link rel="stylesheet" type="text/css" href="/lib/fancybox/jquery.fancybox.css" />
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.2" />
+
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null,"server_url":null,"cdn":null},"toc":true,"fancybox":true,"pjax":"","latex":false};
+</script>
+
+    <title>Redis 设计与实现读书笔记(三).md - Stone's Blog</title>
+  <meta name="generator" content="Hexo 5.2.0"></head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">Stone's Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">Stone's Blog</a>
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">Redis 设计与实现读书笔记(三).md
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2020-12-20
+        </span><span class="post-category">
+            <a href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+    <h2 class="post-toc-title">Contents</h2>
+    <div class="post-toc-content">
+      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6-%E6%8D%A2%E5%8F%A5%E8%AF%9D%E8%AF%B4%E5%B0%B1%E6%98%AF%E4%B8%BB%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">复制(换句话说就是主从服务器)</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%97%A7%E7%89%88%E5%A4%8D%E5%88%B6%E5%8A%9F%E8%83%BD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">旧版复制功能的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5"><span class="toc-text">同步</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E4%BC%A0%E6%92%AD"><span class="toc-text">命令传播</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B0%E7%89%88%E5%A4%8D%E5%88%B6%E5%8A%9F%E8%83%BD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">新版复制功能的实现</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%93%A8%E5%85%B5-Sentinel"><span class="toc-text">哨兵(Sentinel)</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E4%B8%BB%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BF%A1%E6%81%AF"><span class="toc-text">获取主服务器信息</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E4%B8%BB%E8%A7%82%E4%B8%8B%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-text">检测主观下线状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-text">检测客观下线状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%89%E4%B8%BE%E9%A2%86%E5%A4%B4Sentinel"><span class="toc-text">选举领头Sentinel:</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4"><span class="toc-text">集群</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%8A%82%E7%82%B9"><span class="toc-text">节点</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E9%9B%86%E7%BE%A4%E4%B8%AD%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4"><span class="toc-text">在集群中执行命令</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%87%8D%E6%96%B0%E5%88%86%E7%89%87"><span class="toc-text">重新分片</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ASK%E9%94%99%E8%AF%AF"><span class="toc-text">ASK错误:</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%A3%80%E6%B5%8B"><span class="toc-text">故障检测</span></a></li></ol></li></ol>
+    </div>
+  </div><div class="post-content"><p>终于来到我最喜欢的复制哨兵集群部分</p>
+<a id="more"></a> 
+
+<hr>
+<h4 id="复制-换句话说就是主从服务器"><a href="#复制-换句话说就是主从服务器" class="headerlink" title="复制(换句话说就是主从服务器)"></a>复制(换句话说就是主从服务器)</h4><p>用户可以通过SLACEOF命令，让一个服务器去复制另一个服务器，我们称呼被复制的服务器为<strong>主服务器</strong>(master)，而对主服务器进行复制的服务器被称为从服务器(slave).</p>
+<hr>
+<h5 id="旧版复制功能的实现"><a href="#旧版复制功能的实现" class="headerlink" title="旧版复制功能的实现"></a>旧版复制功能的实现</h5><p>Redis的复制功能分为<strong>同步</strong>(sync)和<strong>命令传播</strong>(command propagate)两个操作:</p>
+<ul>
+<li>同步操作用于将从服务器的数据库状态更新至主服务器当前所处的数据库状态。</li>
+<li>命令传播操作则用于在<strong>主服务器的数据库状态被修改</strong>，导致主从服务器的数据库状态出现不一致时，让主从服务器的数据库重新回到一致状态。</li>
+</ul>
+<hr>
+<h6 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h6><p>从服务器对主服务器的同步操作需要通过向主服务器发起SYNC命令来完成，以下是SYNC命令的执行步骤:</p>
+<p>1)从服务器向主服务器发送SYNC命令。</p>
+<p>2)收到SYNC命令的主服务器执行BGSAVE，在后台生成一个RDB文件，并使用一个缓冲区记录从现在执行的所有写命令。</p>
+<p>3)当主服务器的BGSAVE命令执行完毕，主服务器会将BGSAVE命令生成的RDB文件发送给从服务器，从服务器接收并载入这个RDB文件，将自己的数据库状态更新至主服务器执行BGSAVE命令时的数据库状态。</p>
+<p>4）住服务将记录在缓冲区里面的所有写命令发送给从服务器，从服务器执行这些写命令，将自己的数据库状态更新至主服务器数据当前所处的状态。</p>
+<blockquote>
+<p>按我自己来看，就是生成一份快照，然后再把生成快照期间产生的发过来。乍一看还是非常合理的呀。</p>
+</blockquote>
+<h6 id="命令传播"><a href="#命令传播" class="headerlink" title="命令传播"></a>命令传播</h6><p>在同步操作执行完毕之后，主从服务两者的数据库将达到一致状态，但这种一致并不是一成不变的，每当主服务器执行<strong>客户端</strong>发送的写命令时，主服务器的数据库就有可能会被修改，并导致主从服务器状态不再一致。</p>
+<blockquote>
+<p>就是同步完后又修改了，然后必然不一致。</p>
+</blockquote>
+<p>为了让主从服务器再次回到一致状态，主服务器需要对从服务执行命令传播操作:主服务器会将自己执行的写命令，也即是造成主从服务器不一致的那条写命令，发送给从服务器执行，当从服务器执行了同样的写命令之后，主从服务器再次回到一致状态。</p>
+<p>缺陷:</p>
+<p>从服务器对主服务器的复制分为:</p>
+<p>1.初次复制.</p>
+<p>2.断线后重复制.</p>
+<p>对于初次复制，旧版复制功能能很好地完成任务，但断线后重复制，能完成任务，但是效率低。</p>
+<blockquote>
+<p>就是他的断线重复制没有任何的记忆。只能全部重头来一遍。</p>
+</blockquote>
+<hr>
+<h5 id="新版复制功能的实现"><a href="#新版复制功能的实现" class="headerlink" title="新版复制功能的实现"></a>新版复制功能的实现</h5><p>Redis从2.8版本开始，使用PSYNC命令代替SYNC命令来执行复制时的同步操作。</p>
+<p>PSYNC具有完整重同步和部分重同步两种模式</p>
+<ul>
+<li>完整重同步用于初次复制,和SYNC是一样的。</li>
+<li>部分重<strong>复制</strong>用于断线后重<strong>复制</strong>，当从服务器重连后，如果条件允许，主服务器将主从服务器断线期间写命令发给从服务器。</li>
+</ul>
+<blockquote>
+<p>举个不太恰当的例子，相当于加了一个断点续存的功能。</p>
+</blockquote>
+<p>部分重同步功能由以下三个部分构成:</p>
+<ul>
+<li>主服务器的复制偏移量和从服务的复制偏移量。</li>
+<li>主服务的复制积压区。</li>
+<li>服务器的运行ID。</li>
+</ul>
+<p>1.主服务器每次向服务传播N个字节数据，将自己的复制偏移量加上N。</p>
+<p>2.从服务器每次收到主服务传播来的n个字节的数据，将自己的复制偏移量加上N。</p>
+<blockquote>
+<p>有点那种TCP的序号的意思？</p>
+</blockquote>
+<p>复制积压缓冲区由主服务器维护的一个固定长度先进先出队列。</p>
+<p>当主服务器进行命令传播时，不仅会将写命令发送到所有从服务器，还会写到复制积压缓冲区。</p>
+<p>保存的是偏移量和对应字节。</p>
+<blockquote>
+<p>这个可以，只积压一部分。太多直接完整重同步了。</p>
+</blockquote>
+<p>还有一个运行ID，就是检验是不是对应主服务器罢了。</p>
+<blockquote>
+<p>这个业务逻辑还是非常清晰的。</p>
+</blockquote>
+<hr>
+<h4 id="哨兵-Sentinel"><a href="#哨兵-Sentinel" class="headerlink" title="哨兵(Sentinel)"></a>哨兵(Sentinel)</h4><p>Sentinel是Redis的高可用性(highg availability)(CAP)?解决方案：由一个或多个Sentinel组成的哨兵系统可以监视任意多个主服务器，以及这些主服务器属下的所有从服务器，并在被监视的主服务器下线状态时，自动将主武器属下的某个从服务器升级为新的主服务器。</p>
+<p>当主服务的下线时长超过用户设定的下线时长上限时，Sentinel系统就会对主服务器进行<strong>故障转移</strong>操作：</p>
+<ul>
+<li>挑选一个从服务器，升级为新的主服务器。</li>
+<li>之后sentinel会向之前主服务器下所有服务器发送新的复制指令，让他们成为新的主服务器的从服务器，当所有从服务器都开始复制新的主服务器时，故障转移操作执行完毕。</li>
+<li>sentinel还会继续监视已下线的主服务器，当它重新上线时，让它成为新的主服务器的从服务器。</li>
+</ul>
+<blockquote>
+<p>有点虎符的意思，虎符在谁手上听谁的。</p>
+</blockquote>
+<p>Sentinel本质上只是一个运行在特殊模式下的Redis服务器</p>
+<blockquote>
+<p>突发奇想，sentinel挂了咋办</p>
+</blockquote>
+<hr>
+<h5 id="获取主服务器信息"><a href="#获取主服务器信息" class="headerlink" title="获取主服务器信息"></a>获取主服务器信息</h5><p>sentinel默认会以每10秒一次的频率，通过命令连接向被监视的主服务器发送INFO命令，并通过回复获取主服务器的当前信息。</p>
+<hr>
+<p>从服务器同样也是10一次发送INFO命令</p>
+<hr>
+<h5 id="检测主观下线状态"><a href="#检测主观下线状态" class="headerlink" title="检测主观下线状态"></a>检测主观下线状态</h5><p>默认情况下，sentinel会以每秒1次的频率想所有与它创建了命令连接的实例发送PING命令，并通过实例返回的PING命令回复来判断实例是否在线。</p>
+<p>根据配置文件down_after-milliseconds 设为50000ms，如果主服务器连续50000mss都返回无效回复。</p>
+<p>sentinel就会标记会主观下线。</p>
+<blockquote>
+<p>就是不是一次就定生死，还是会给一点机会的。</p>
+</blockquote>
+<h5 id="检测客观下线状态"><a href="#检测客观下线状态" class="headerlink" title="检测客观下线状态"></a>检测客观下线状态</h5><p>当sentinel将一个主服务器判断为主观下线，为了确认这个服务器是否真的下线，它会向同样监视这一主服务器的其他sentinel进行询问，当下线判断数量足够时，sentinel就会将服务器判定为客观下线，并对主服务器进行故障转移。</p>
+<h5 id="选举领头Sentinel"><a href="#选举领头Sentinel" class="headerlink" title="选举领头Sentinel:"></a>选举领头Sentinel:</h5><p>由领头sentinel对下线主服务进行故障转移操作</p>
+<p>选举办法。</p>
+<ul>
+<li>所有在线的sentinel都有选为领头Sentinel的资格</li>
+<li>每次进行领头选举之后，sentinel的配置纪元的值都会自增一次。一个计数器。</li>
+</ul>
+<blockquote>
+<p>配置纪元相当于选举届数</p>
+</blockquote>
+<ul>
+<li>在一个配置纪元里面，所有sentinel都有一个一个sentinel设为局部sentinel的机会。这次不可修改。</li>
+</ul>
+<blockquote>
+<p>每个人都有选票</p>
+</blockquote>
+<ul>
+<li>拉票命令sentinel-is-maser-down-by-addr 拉票命令</li>
+<li>规矩是先到先得;后面的都会被拒绝。</li>
+<li>如果有某人sentinel被半数以上选举，那就成为领头sentinel.（10个需要6个)</li>
+<li>规定时间内，没选举处理。再在一段时间后再进行选举，直到选出来为止。</li>
+</ul>
+<hr>
+<p>选择新主服务器：</p>
+<ul>
+<li><p>删除下线或者断线的肯定要走</p>
+</li>
+<li><p>删除最近五秒没回复领头Sential INFO</p>
+</li>
+<li><p>删除与已下线主服务器连接断开超过，down_affter_milliseconds * 10 为了数据比较新</p>
+</li>
+<li><p>然后看优先级，优先级看完看偏移量，如果还不行看ID。</p>
+</li>
+</ul>
+<hr>
+<h4 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h4><p>Redis集群是Redis提供的分布式数据库方案，集群通过分片来进行数据共享，并提供复制和故障转移功能。介绍集群的节点、槽指派、命令执行、重新分片、转向、故障转移、消息。</p>
+<h5 id="节点"><a href="#节点" class="headerlink" title="节点"></a>节点</h5><p>Redis集群由多个节点组成。它们都处于一个只包含自己的集群当中，要组建集群，就要把独立的节点连接起来。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cluster meet</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>槽指派</p>
+<p>Redis集群通过分片的方式保存数据库中的键值对:集群的整个数据库被分为16384个槽(slot),集群中的每个节点可以处理0个或16384个槽。</p>
+<p>​    当数据库的16384个槽都有节点在处理时，集群处于上线状态。任意一个槽没有得到处理，集群处于下线状态。</p>
+<blockquote>
+<p>有一致性哈希那味了</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cluster addslots 指派槽给节点</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h5 id="在集群中执行命令"><a href="#在集群中执行命令" class="headerlink" title="在集群中执行命令"></a>在集群中执行命令</h5><p>当客户端向节点发送与数据库键有关的命令时，接收命令的节点会计算出命令要处理的数据库键属于哪个槽，并检查这个槽是否指派给了自己:</p>
+<ul>
+<li>如果键锁在的槽正好就指派给了当前节点，那么节点直接执行这个命令。</li>
+<li>如果没有指派给当前节点，节点向客户端返回一个moved错误，直营客户端redirect至正确的节点，并再次发送之前想要执行的命令。</li>
+</ul>
+<p>计算key属于哪个槽算法:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">slot_number</span>(<span class="params">key</span>):</span></span><br><span class="line">  <span class="keyword">return</span> crc16(key) &amp; <span class="number">16383</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h5 id="重新分片"><a href="#重新分片" class="headerlink" title="重新分片"></a>重新分片</h5><p>将任意数量已经指派给某个节点的槽改为指派给另一个节点，相关的键值对也会转移。</p>
+<p>不需要下线，源节点和目标节点都可以继续处理命令请求。</p>
+<hr>
+<h5 id="ASK错误"><a href="#ASK错误" class="headerlink" title="ASK错误:"></a>ASK错误:</h5><p>命令要处理的数据库键恰好属于正在被迁移的槽:</p>
+<ul>
+<li>先在自己数据库找，找到直接返回。</li>
+<li>没找到，返回一个ask错误，指引客户端转向目标节点。</li>
+</ul>
+<hr>
+<h5 id="故障检测"><a href="#故障检测" class="headerlink" title="故障检测"></a>故障检测</h5><p>集群中的每个节点都会定期地向集群中的其他节点发送ping消息，以检测对方是否在线，如果在规定时间内没有返回pong，那么标记为疑似下线。</p>
+<blockquote>
+<p>这和之前哨兵不一样，他们是自己检举自己，哨兵是别人监管他们。那这么看好像哨兵效率更高一些。</p>
+</blockquote>
+<p>如果在一个集群中，半数以上负责处理槽的主节点都把某个主节点x报告为疑似下线，那么这个主节点x被标记为已下线，将主节点x标记为已下线的节点会向集群广播一条关于主节点x的fail信息。所有收到这条fail消息的节点，都会标记x已下线。</p>
+<hr>
+<p>选举新节点和哨兵选择新领头是一样的。</p>
+
+      </div>
+      <div class="post-copyright">
+    <p class="copyright-item">
+      <span>Author: </span>
+      <a href="http://example.com">zstone12</a>
+    </p>
+    <p class="copyright-item">
+      <span>Link: </span>
+      <a href="http://example.com/2020/12/20/redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B03-md/">http://example.com/2020/12/20/redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B03-md/</a>
+    </p>
+    <p class="copyright-item">
+      <span>License: </span><a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>
+    </p>
+  </div>
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/redis/">redis</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2020/12/20/LEETCODE-LRU%E6%8E%A2%E7%A9%B6/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">LeetCode-LRU 探究</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2020/12/17/raft%E8%AE%BA%E6%96%87%E2%80%94-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">
+        <span class="next-text nav-default">Raft 论文阅读笔记</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        <a target="_blank" rel="noopener" href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2023<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">zstone12</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.2"></script>
+</body>
+</html>
